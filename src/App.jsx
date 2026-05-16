@@ -11,7 +11,7 @@ const SESSIONS_KEY = "my_journal_sessions";
 const PNL_MODE_KEY = "my_journal_pnl_mode";
 const LANGUAGE_KEY = "my_journal_language";
 const JOURNAL_TABLE = "journal_data";
-const DEFAULT_LANGUAGE = "vi";
+const DEFAULT_LANGUAGE = "en";
 
 const LANGUAGES = [
   { value: "vi", label: "Tiếng Việt" },
