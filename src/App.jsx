@@ -943,10 +943,11 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, 
           </button>
         </div>
       </div>
-      
+
       <div>
         <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>Phương pháp giao dịch</div>
         <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Mỗi setup là checklist các bước bạn cần làm trước khi vào lệnh.</div>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Hãy làm theo các bước để đảm bảo bạn tuân thủ kỷ luật giao dịch và tránh overtrading.</div>
         {setups.length === 0 && !editingId && <div style={{ textAlign: "center", color: "#ccc", padding: "30px 0", fontSize: 13, background: "#f7f7f5", borderRadius: 10 }}>Chưa có setup nào.</div>}
         {setups.map(setup => (
           editingId === setup.id
