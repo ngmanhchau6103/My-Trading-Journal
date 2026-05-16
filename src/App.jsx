@@ -105,6 +105,10 @@ const TEXT = {
     noResult: "Chưa có kết quả",
     bySession: "Theo session",
     bySetup: "Theo setup",
+    setupPerformance: "Hiệu suất setup",
+    planRate: "Tỷ lệ theo plan",
+    lossWithoutPlan: "Loss khi không theo plan",
+    noSetupPerformance: "Chưa có dữ liệu setup.",
     noData: "Chưa có dữ liệu",
 
     setupName: "Tên phương pháp",
@@ -273,6 +277,10 @@ const TEXT = {
     noResult: "No result yet",
     bySession: "By session",
     bySetup: "By setup",
+    setupPerformance: "Setup performance",
+    planRate: "Plan rate",
+    lossWithoutPlan: "Losses without plan",
+    noSetupPerformance: "No setup performance data yet.",
     noData: "No data yet",
 
     setupName: "Method name",
@@ -3220,6 +3228,178 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
   );
 }
 
+function SetupPerformance({ trades, setups, t }) {
+  const rows = setups
+    .map(setup => {
+      const setupTrades = trades.filter(trade =>
+        (trade.selectedSetupIds || []).includes(setup.id)
+      );
+
+      const withResult = setupTrades.filter(trade => trade.result);
+      const wins = withResult.filter(trade => trade.result === "Win").length;
+      const losses = withResult.filter(trade => trade.result === "Loss").length;
+      const be = withResult.filter(trade => trade.result === "BE").length;
+
+      const followedYes = setupTrades.filter(
+        trade => trade.followedPlan === "Yes"
+      ).length;
+
+      const followedNoLosses = setupTrades.filter(
+        trade => trade.followedPlan === "No" && trade.result === "Loss"
+      ).length;
+
+      const disciplineTotal = setupTrades.filter(
+        trade =>
+          trade.followedPlan === "Yes" ||
+          trade.followedPlan === "No" ||
+          trade.followedPlan === "Partially"
+      ).length;
+
+      return {
+        id: setup.id,
+        name: setup.name,
+        count: setupTrades.length,
+        wins,
+        losses,
+        be,
+        wr: withResult.length ? ((wins / withResult.length) * 100).toFixed(0) : "—",
+        planRate: disciplineTotal
+          ? ((followedYes / disciplineTotal) * 100).toFixed(0)
+          : "—",
+        followedNoLosses,
+      };
+    })
+    .filter(row => row.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: "#888",
+          marginBottom: 10,
+          textTransform: "uppercase",
+          letterSpacing: 0.3,
+        }}
+      >
+        {t("setupPerformance")}
+      </div>
+
+      {rows.length === 0 ? (
+        <div style={{ fontSize: 13, color: "#bbb" }}>
+          {t("noSetupPerformance")}
+        </div>
+      ) : (
+        <div
+          style={{
+            background: "#fff",
+            border: "0.5px solid #e5e5e5",
+            borderRadius: 12,
+            overflow: "hidden",
+          }}
+        >
+          {rows.map(row => (
+            <div
+              key={row.id}
+              style={{
+                padding: "12px 14px",
+                borderBottom: "0.5px solid #f0f0f0",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  marginBottom: 8,
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ fontWeight: 700, color: "#111", fontSize: 14 }}>
+                  {row.name}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#999" }}>
+                  {row.count} {t("tradeUnit")}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(4, 1fr)",
+                  gap: 8,
+                  fontSize: 12,
+                }}
+              >
+                <div
+                  style={{
+                    background: "#f7f7f5",
+                    borderRadius: 8,
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div style={{ color: "#aaa", marginBottom: 3 }}>{t("winRate")}</div>
+                  <div style={{ color: "#3B6D11", fontWeight: 700 }}>
+                    {row.wr}%
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "#f7f7f5",
+                    borderRadius: 8,
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div style={{ color: "#aaa", marginBottom: 3 }}>
+                    {t("winLossBE")}
+                  </div>
+                  <div style={{ color: "#111", fontWeight: 700 }}>
+                    {row.wins} / {row.losses} / {row.be}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "#EBF4FD",
+                    borderRadius: 8,
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div style={{ color: "#185FA5", marginBottom: 3 }}>
+                    {t("planRate")}
+                  </div>
+                  <div style={{ color: "#185FA5", fontWeight: 700 }}>
+                    {row.planRate}%
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "#FCEBEB",
+                    borderRadius: 8,
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div style={{ color: "#A32D2D", marginBottom: 3 }}>
+                    {t("lossWithoutPlan")}
+                  </div>
+                  <div style={{ color: "#A32D2D", fontWeight: 700 }}>
+                    {row.followedNoLosses}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function Stats({ trades, setups, sessions, t }) {
   const withResult = trades.filter(trade => trade.result);
@@ -3344,6 +3524,8 @@ function Stats({ trades, setups, sessions, t }) {
         <StatCard label={t("winLossBE")} val={`${wins} / ${losses} / ${be}`} />
         <StatCard label={t("noResult")} val={trades.length - withResult.length} />
       </div>
+
+      <SetupPerformance trades={trades} setups={setups} t={t} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <div>
