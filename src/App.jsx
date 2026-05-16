@@ -1049,7 +1049,7 @@ export default function App() {
     <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <div style={{ maxWidth: 780, margin: "0 auto", padding: "24px 20px" }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 4 }}>My Trading Journal</h1>
-        <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Time - Price - Consistency</p>
+        <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Made by Chau Nguyen</p>
 
         <div style={{ display: "flex", borderBottom: "0.5px solid #e5e5e5", marginBottom: 24, overflowX: "auto" }}>
           <button style={tabStyle("new")}      onClick={() => { setEditTrade(null); setTab("new"); }}>+ Lệnh mới</button>
