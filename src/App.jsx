@@ -9,6 +9,7 @@ const STORAGE_KEY  = "my_journal_trades";
 const SETUPS_KEY   = "my_journal_setups";
 const SESSIONS_KEY = "my_journal_sessions";
 const PNL_MODE_KEY = "my_journal_pnl_mode";
+const LANGUAGE_KEY = "my_journal_language";
 const DEFAULT_SESSIONS = ["Asia","London","Pre-market NY AM","NY AM Macro 09:45–10:15","NY AM Macro 10:45–11:15"];
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -74,6 +75,70 @@ const validatePnl = (result, pnl) => {
   }
 
   return true;
+};
+
+// ─── Language dictionary ─────────────────────────────────────────────────────
+const TEXT = {
+  vi: {
+    appTitle: "My Trading Journal",
+    subtitle: "Time - Price - Consistency",
+    newTrade: "+ Lệnh mới",
+    history: "Lịch sử",
+    stats: "📅 Thống kê",
+    settings: "Thiết lập",
+
+    language: "Ngôn ngữ / Language",
+    languageDesc: "Chọn ngôn ngữ hiển thị cho giao diện. Một số nội dung chi tiết có thể được dịch dần trong các bản cập nhật sau.",
+    vietnamese: "Tiếng Việt",
+    english: "English",
+
+    pnlUnit: "Đơn vị ghi nhận P/L",
+    pnlUnitDesc: "Chọn cách bạn muốn ghi nhận kết quả mỗi lệnh. App sẽ tự thêm dấu + / - theo Win hoặc Loss.",
+    byR: "Theo R:R",
+    byMoney: "Theo số tiền",
+
+    tradingMethod: "Phương pháp giao dịch",
+    tradingMethodDesc: "Mỗi setup là checklist các bước bạn cần làm trước khi vào lệnh.",
+    tradingDisciplineDesc: "Hãy làm theo các bước để đảm bảo bạn tuân thủ kỷ luật giao dịch và tránh overtrading.",
+    noSetup: "Chưa có setup nào.",
+    edit: "Sửa",
+    createSetup: "+ Tạo setup mới",
+
+    sessions: "Phiên giao dịch",
+    sessionsDesc: "Thêm các phiên phù hợp với phương pháp của bạn.",
+    addSessionPlaceholder: "Thêm phiên mới... vd: NY AM, Signal M15",
+    add: "Thêm",
+  },
+  en: {
+    appTitle: "My Trading Journal",
+    subtitle: "Time - Price - Consistency",
+    newTrade: "+ New Trade",
+    history: "History",
+    stats: "📅 Statistics",
+    settings: "Settings",
+
+    language: "Language",
+    languageDesc: "Choose the display language for the interface. Some detailed text can be translated gradually in future updates.",
+    vietnamese: "Vietnamese",
+    english: "English",
+
+    pnlUnit: "P/L Recording Unit",
+    pnlUnitDesc: "Choose how you want to record each trade result. The app will automatically add + / - based on Win or Loss.",
+    byR: "By R:R",
+    byMoney: "By Money",
+
+    tradingMethod: "Trading Method",
+    tradingMethodDesc: "Each setup is a checklist of steps you need to complete before entering a trade.",
+    tradingDisciplineDesc: "Follow these steps to stay disciplined and avoid overtrading.",
+    noSetup: "No setup yet.",
+    edit: "Edit",
+    createSetup: "+ Create New Setup",
+
+    sessions: "Trading Sessions",
+    sessionsDesc: "Add the sessions that match your trading method.",
+    addSessionPlaceholder: "Add new session... e.g. NY AM, Signal M15",
+    add: "Add",
+  },
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -881,7 +946,7 @@ function SetupEditor({ setup, onSave, onCancel, onDelete }) {
 }
 
 // ─── ThietLap Tab ─────────────────────────────────────────────────────────────
-function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, onPnlModeSave }) {
+function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, onPnlModeSave, language, onLanguageSave, t }) {
   const [editingId, setEditingId] = useState(null);
   const [editingSetup, setEditingSetup] = useState(null);
   const [newSession, setNewSession] = useState("");
@@ -908,10 +973,48 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, 
     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       <div>
         <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>
-          Đơn vị ghi nhận P/L
+          {t.language}
         </div>
         <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
-          Chọn cách bạn muốn ghi nhận kết quả mỗi lệnh. App sẽ tự thêm dấu + / - theo Win hoặc Loss.
+          {t.languageDesc}
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button
+            onClick={() => onLanguageSave("vi")}
+            style={{
+              ...btnStyle,
+              padding: "10px 18px",
+              border: `1.5px solid ${language === "vi" ? "#185FA5" : "#ddd"}`,
+              background: language === "vi" ? "#EBF4FD" : "#fff",
+              color: language === "vi" ? "#185FA5" : "#777",
+              fontWeight: language === "vi" ? 600 : 400,
+            }}
+          >
+            🇻🇳 {t.vietnamese}
+          </button>
+
+          <button
+            onClick={() => onLanguageSave("en")}
+            style={{
+              ...btnStyle,
+              padding: "10px 18px",
+              border: `1.5px solid ${language === "en" ? "#185FA5" : "#ddd"}`,
+              background: language === "en" ? "#EBF4FD" : "#fff",
+              color: language === "en" ? "#185FA5" : "#777",
+              fontWeight: language === "en" ? 600 : 400,
+            }}
+          >
+            🇺🇸 {t.english}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>
+          {t.pnlUnit}
+        </div>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
+          {t.pnlUnitDesc}
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
@@ -925,7 +1028,7 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, 
               fontWeight: pnlMode === "R" ? 600 : 400,
             }}
           >
-            Theo R:R
+            {t.byR}
           </button>
 
           <button
@@ -939,16 +1042,16 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, 
               fontWeight: pnlMode === "money" ? 600 : 400,
             }}
           >
-            Theo số tiền
+            {t.byMoney}
           </button>
         </div>
       </div>
 
       <div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>Phương pháp giao dịch</div>
-        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Mỗi setup là checklist các bước bạn cần làm trước khi vào lệnh.</div>
-        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Hãy làm theo các bước để đảm bảo bạn tuân thủ kỷ luật giao dịch và tránh overtrading.</div>
-        {setups.length === 0 && !editingId && <div style={{ textAlign: "center", color: "#ccc", padding: "30px 0", fontSize: 13, background: "#f7f7f5", borderRadius: 10 }}>Chưa có setup nào.</div>}
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>{t.tradingMethod}</div>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{t.tradingMethodDesc}</div>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{t.tradingDisciplineDesc}</div>
+        {setups.length === 0 && !editingId && <div style={{ textAlign: "center", color: "#ccc", padding: "30px 0", fontSize: 13, background: "#f7f7f5", borderRadius: 10 }}>{t.noSetup}</div>}
         {setups.map(setup => (
           editingId === setup.id
             ? <SetupEditor key={setup.id} setup={editingSetup} onSave={handleSaveSetup} onCancel={() => { setEditingId(null); setEditingSetup(null); }} onDelete={() => handleDeleteSetup(setup.id)} />
@@ -964,16 +1067,16 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, 
                     ))}
                   </div>
                 </div>
-                <button onClick={() => { setEditingSetup(setup); setEditingId(setup.id); }} style={{ ...btnStyle, flexShrink: 0 }}>Sửa</button>
+                <button onClick={() => { setEditingSetup(setup); setEditingId(setup.id); }} style={{ ...btnStyle, flexShrink: 0 }}>{t.edit}</button>
               </div>
             )
         ))}
         {editingId === "new" && <SetupEditor setup={null} onSave={handleSaveSetup} onCancel={() => setEditingId(null)} />}
-        {editingId !== "new" && <button onClick={() => { setEditingSetup(null); setEditingId("new"); }} style={{ ...primaryBtn, marginTop: 4 }}>+ Tạo setup mới</button>}
+        {editingId !== "new" && <button onClick={() => { setEditingSetup(null); setEditingId("new"); }} style={{ ...primaryBtn, marginTop: 4 }}>{t.createSetup}</button>}
       </div>
       <div>
-        <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>Phiên giao dịch</div>
-        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Thêm các phiên phù hợp với phương pháp của bạn.</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>{t.sessions}</div>
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{t.sessionsDesc}</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
           {sessions.map(s => (
             <div key={s} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 20, background: "#f7f7f5", border: "0.5px solid #ddd", fontSize: 13 }}>
@@ -983,8 +1086,8 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave, pnlMode, 
           ))}
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <input type="text" placeholder="Thêm phiên mới... vd: NY AM, Signal M15" value={newSession} onChange={e => setNewSession(e.target.value)} onKeyDown={e => e.key === "Enter" && addSession()} style={{ ...inp, flex: 1, fontSize: 13 }} />
-          <button onClick={addSession} style={btnStyle}>Thêm</button>
+          <input type="text" placeholder={t.addSessionPlaceholder} value={newSession} onChange={e => setNewSession(e.target.value)} onKeyDown={e => e.key === "Enter" && addSession()} style={{ ...inp, flex: 1, fontSize: 13 }} />
+          <button onClick={addSession} style={btnStyle}>{t.add}</button>
         </div>
       </div>
     </div>
@@ -998,6 +1101,8 @@ export default function App() {
   const [setups,    setSetups]    = useState(() => load(SETUPS_KEY,   []));
   const [sessions,  setSessions]  = useState(() => load(SESSIONS_KEY, DEFAULT_SESSIONS));
   const [pnlMode, setPnlMode] = useState(() => load(PNL_MODE_KEY, "R"));
+  const [language, setLanguage] = useState(() => load(LANGUAGE_KEY, "vi"));
+  const t = TEXT[language] || TEXT.vi;
   const [editTrade, setEditTrade] = useState(null);
   const [dayModal,  setDayModal]  = useState(null); // { dateStr, dayTrades }
 
@@ -1005,6 +1110,7 @@ export default function App() {
   useEffect(() => { persist(SETUPS_KEY,   setups);   }, [setups]);
   useEffect(() => { persist(SESSIONS_KEY, sessions); }, [sessions]);
   useEffect(() => { persist(PNL_MODE_KEY, pnlMode); }, [pnlMode]);
+  useEffect(() => { persist(LANGUAGE_KEY, language); }, [language]);
 
   // FIX: id assigned here on save, not inside emptyForm
   const saveTrade = form => {
@@ -1048,14 +1154,14 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa", fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <div style={{ maxWidth: 780, margin: "0 auto", padding: "24px 20px" }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 4 }}>My Trading Journal</h1>
-        <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Time - Price - Consistency</p>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 4 }}>{t.appTitle}</h1>
+        <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>{t.subtitle}</p>
 
         <div style={{ display: "flex", borderBottom: "0.5px solid #e5e5e5", marginBottom: 24, overflowX: "auto" }}>
-          <button style={tabStyle("new")}      onClick={() => { setEditTrade(null); setTab("new"); }}>+ Lệnh mới</button>
-          <button style={tabStyle("history")}  onClick={() => setTab("history")}>Lịch sử ({trades.length})</button>
-          <button style={tabStyle("stats")}    onClick={() => setTab("stats")}>📅 Thống kê</button>
-          <button style={tabStyle("thietlap")} onClick={() => setTab("thietlap")}>Thiết lập</button>
+          <button style={tabStyle("new")}      onClick={() => { setEditTrade(null); setTab("new"); }}>{t.newTrade}</button>
+          <button style={tabStyle("history")}  onClick={() => setTab("history")}>{t.history} ({trades.length})</button>
+          <button style={tabStyle("stats")}    onClick={() => setTab("stats")}>{t.stats}</button>
+          <button style={tabStyle("thietlap")} onClick={() => setTab("thietlap")}>{t.settings}</button>
         </div>
 
         {tab === "new" && (<NewTradeFlow initial={editTrade} onSave={saveTrade} onCancel={() => { setEditTrade(null); setTab("history"); }} setups={setups} sessions={sessions} pnlMode={pnlMode} />)}
@@ -1068,7 +1174,7 @@ export default function App() {
           onSelectDay={(dateStr, dayTrades) => setDayModal({ dateStr, dayTrades })}
           />
         )}
-        {tab === "thietlap" && <ThietLapTab setups={setups} onSetupsSave={setSetups} sessions={sessions} onSessionsSave={setSessions} pnlMode={pnlMode} onPnlModeSave={setPnlMode} />}
+        {tab === "thietlap" && <ThietLapTab setups={setups} onSetupsSave={setSetups} sessions={sessions} onSessionsSave={setSessions} pnlMode={pnlMode} onPnlModeSave={setPnlMode} language={language} onLanguageSave={setLanguage} t={t} />}
 
         {dayModal && (
           <DayModal
