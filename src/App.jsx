@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { supabase } from "./lib/supabaseClient";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const TIMEFRAMES = ["1M","3M","5M","15M","30M","1H","4H","D","W"];
+const TIMEFRAMES = ["1M","2M","3M","5M","15M","30M","1H","4H","D","W"];
 const STORAGE_KEY  = "my_journal_trades";
 const SETUPS_KEY   = "my_journal_setups";
 const SESSIONS_KEY = "my_journal_sessions";
