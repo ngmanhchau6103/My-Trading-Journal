@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { supabase } from "./lib/supabaseClient";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TIMEFRAMES = ["1M","3M","5M","15M","30M","1H","4H","D","W"];
@@ -3101,9 +3102,82 @@ function ThietLapTab({
     </div>
   );
 }
+function AuthScreen() {
+  const [loading, setLoading] = useState(false);
+
+  const signInWithGoogle = async () => {
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
+
+    if (error) {
+      alert(error.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#fafafa",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          background: "#fff",
+          border: "0.5px solid #e5e5e5",
+          borderRadius: 18,
+          padding: 28,
+          boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
+          textAlign: "center",
+        }}
+      >
+        <h1 style={{ fontSize: 22, marginBottom: 8 }}>
+          My Trading Journal
+        </h1>
+
+        <p style={{ fontSize: 14, color: "#888", lineHeight: 1.6, marginBottom: 22 }}>
+          Sign in with Google to save your trades, setups, and statistics across devices.
+        </p>
+
+        <button
+          onClick={signInWithGoogle}
+          disabled={loading}
+          style={{
+            ...primaryBtn,
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 8,
+            opacity: loading ? 0.65 : 1,
+          }}
+        >
+          {loading ? "Signing in..." : "Continue with Google"}
+        </button>
+
+        <p style={{ fontSize: 12, color: "#aaa", marginTop: 16 }}>
+          Your journal data will be private to your account.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [tab, setTab] = useState("new");
   const [trades, setTrades] = useState(() => load(STORAGE_KEY, []));
   const [setups, setSetups] = useState(() => load(SETUPS_KEY, []));
@@ -3118,6 +3192,35 @@ export default function App() {
   const [dayModal, setDayModal] = useState(null);
 
   const t = useCallback(key => tOf(language, key), [language]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (mounted) {
+        setUser(session?.user || null);
+        setAuthLoading(false);
+      }
+    };
+
+    initAuth();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     persist(STORAGE_KEY, trades);
@@ -3175,6 +3278,11 @@ export default function App() {
     setTab("new");
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
   const tabStyle = tName => ({
     padding: "9px 22px",
     cursor: "pointer",
@@ -3187,6 +3295,29 @@ export default function App() {
     fontFamily: "inherit",
   });
 
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#fafafa",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          color: "#888",
+          fontSize: 14,
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
   return (
     <div
       style={{
@@ -3196,13 +3327,53 @@ export default function App() {
       }}
     >
       <div style={{ maxWidth: 780, margin: "0 auto", padding: "24px 20px" }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 4 }}>
-          My Trading Journal
-        </h1>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 12,
+            marginBottom: 20,
+          }}
+        >
+          <div>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 4 }}>
+              My Trading Journal
+            </h1>
 
-        <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>
-          {t("madeBy")}
-        </p>
+            <p style={{ fontSize: 13, color: "#aaa", margin: 0 }}>
+              {t("madeBy")}
+            </p>
+          </div>
+
+          <div style={{ textAlign: "right" }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#888",
+                marginBottom: 6,
+                maxWidth: 220,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {user?.email}
+            </div>
+
+            <button
+              onClick={signOut}
+              style={{
+                ...btnStyle,
+                fontSize: 12,
+                padding: "4px 10px",
+                color: "#888",
+              }}
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
 
         <div
           style={{
