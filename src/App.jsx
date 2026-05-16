@@ -654,6 +654,66 @@ function DayModal({ dateStr, dayTrades, setups, onClose, onEdit, onDelete }) {
     </div>
   );
 }
+// ─── Combined Stats + Calendar Tab ───────────────────────────────────────────
+function StatsTab({ trades, setups, sessions, onSelectDay }) {
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const filteredTrades = useMemo(() => {
+    return trades.filter(t => {
+      if (fromDate && t.date < fromDate) return false;
+      if (toDate && t.date > toDate) return false;
+      return true;
+    });
+  }, [trades, fromDate, toDate]);
+
+  const clearDateFilter = () => {
+    setFromDate("");
+    setToDate("");
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div style={{
+        background: "#fff",
+        border: "0.5px solid #e5e5e5",
+        borderRadius: 12,
+        padding: "14px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}>
+        <div style={{ fontSize: 12, color: "#888", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.3 }}>
+          Lọc theo ngày
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10, alignItems: "end" }}>
+          <div>
+            <div style={lbl}>Từ ngày</div>
+            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={inp} />
+          </div>
+
+          <div>
+            <div style={lbl}>Đến ngày</div>
+            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={inp} />
+          </div>
+
+          <button onClick={clearDateFilter} style={{ ...btnStyle, height: 34 }}>
+            Xoá lọc
+          </button>
+        </div>
+
+        <div style={{ fontSize: 12, color: "#aaa" }}>
+          Đang hiển thị {filteredTrades.length} / {trades.length} lệnh
+        </div>
+      </div>
+
+      <CalendarView trades={filteredTrades} onSelectDay={onSelectDay} />
+
+      <Stats trades={filteredTrades} setups={setups} sessions={sessions} />
+    </div>
+  );
+}
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function Stats({ trades, setups, sessions }) {
@@ -896,15 +956,20 @@ export default function App() {
         <div style={{ display: "flex", borderBottom: "0.5px solid #e5e5e5", marginBottom: 24, overflowX: "auto" }}>
           <button style={tabStyle("new")}      onClick={() => { setEditTrade(null); setTab("new"); }}>+ Lệnh mới</button>
           <button style={tabStyle("history")}  onClick={() => setTab("history")}>Lịch sử ({trades.length})</button>
-          <button style={tabStyle("calendar")} onClick={() => setTab("calendar")}>📅 Calendar</button>
-          <button style={tabStyle("stats")}    onClick={() => setTab("stats")}>Thống kê</button>
+          <button style={tabStyle("stats")}    onClick={() => setTab("stats")}>📅 Thống kê</button>
           <button style={tabStyle("thietlap")} onClick={() => setTab("thietlap")}>Thiết lập</button>
         </div>
 
         {tab === "new"      && <NewTradeFlow initial={editTrade} onSave={saveTrade} onCancel={editTrade ? () => { setEditTrade(null); setTab("history"); } : null} setups={setups} sessions={sessions} />}
         {tab === "history"  && <HistoryTab trades={trades} setups={setups} sessions={sessions} onDelete={deleteTrade} onEdit={startEdit} />}
-        {tab === "calendar" && <CalendarView trades={trades} onSelectDay={(dateStr, dayTrades) => setDayModal({ dateStr, dayTrades })} />}
-        {tab === "stats"    && <Stats trades={trades} setups={setups} sessions={sessions} />}
+        {tab === "stats"    && (
+          <StatsTab
+          trades={trades}
+          setups={setups}
+          sessions={sessions}
+          onSelectDay={(dateStr, dayTrades) => setDayModal({ dateStr, dayTrades })}
+          />
+        )}
         {tab === "thietlap" && <ThietLapTab setups={setups} onSetupsSave={setSetups} sessions={sessions} onSessionsSave={setSessions} />}
 
         {dayModal && (
