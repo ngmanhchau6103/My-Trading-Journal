@@ -41,6 +41,34 @@ const emptyForm = () => ({
   lesson: "", images: [], result: "", pnl: "",
 });
 
+const normalizePnl = (result, pnl) => {
+  const raw = String(pnl || "").trim();
+  if (!raw) return "";
+
+  // Nếu nhập 0 hoặc 0R thì giữ nguyên, vì đây là hòa vốn thật sự
+  if (raw === "0" || raw.toLowerCase() === "0r") return raw;
+
+  // Bỏ dấu + / - cũ để tránh bị ++ hoặc --
+  const unsigned = raw.replace(/^[+-]\s*/, "");
+
+  if (result === "Win") return `+${unsigned}`;
+  if (result === "Loss") return `-${unsigned}`;
+
+  // BE cho phép cả + hoặc -, nhưng bắt buộc người dùng tự nhập dấu
+  return raw;
+};
+
+const validatePnl = (result, pnl) => {
+  const raw = String(pnl || "").trim();
+
+  if (result === "BE" && raw && raw !== "0" && raw.toLowerCase() !== "0r" && !/^[+-]/.test(raw)) {
+    alert("Lệnh BE cần nhập dấu + hoặc - ở P&L. Ví dụ: +0.2R hoặc -0.1R.");
+    return false;
+  }
+
+  return true;
+};
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const btnStyle   = { fontSize: 13, padding: "5px 14px", cursor: "pointer", borderRadius: 7, border: "0.5px solid #ccc", background: "#fff", fontFamily: "inherit" };
 const primaryBtn = { ...btnStyle, background: "#1a1a1a", color: "#fff", border: "1px solid #1a1a1a", fontSize: 14, padding: "8px 22px", fontWeight: 500 };
@@ -918,10 +946,18 @@ export default function App() {
 
   // FIX: id assigned here on save, not inside emptyForm
   const saveTrade = form => {
+    if (!validatePnl(form.result, form.pnl)) return;
+
+    const cleanForm = {
+      ...form,
+      pnl: normalizePnl(form.result, form.pnl),
+    };
+
     setTrades(ts => editTrade
-      ? ts.map(t => t.id === form.id ? form : t)
-      : [{ ...form, id: Date.now() }, ...ts]
+      ? ts.map(t => t.id === cleanForm.id ? cleanForm : t)
+      : [{ ...cleanForm, id: Date.now() }, ...ts]
     );
+
     setEditTrade(null);
     setTab("history");
   };
