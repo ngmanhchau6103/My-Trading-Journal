@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -9,8 +11,25 @@ const SESSIONS_KEY = "my_journal_sessions";
 const DEFAULT_SESSIONS = ["Asia","London","Pre-market NY AM","NY AM Macro 09:45–10:15","NY AM Macro 10:45–11:15"];
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
-const load    = (key, fallback) => { try { const v = localStorage.getItem(key); return v != null ? JSON.parse(v) : fallback; } catch { return fallback; } };
-const persist = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+// Safe for Vercel/Next.js: localStorage only exists in the browser, not during SSR/build.
+const load = (key, fallback) => {
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const v = window.localStorage.getItem(key);
+    return v != null ? JSON.parse(v) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const persist = (key, val) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(val));
+  } catch {}
+};
 
 // ─── emptyForm: id assigned only on save ─────────────────────────────────────
 const emptyForm = () => ({
@@ -74,6 +93,8 @@ function ImageUpload({ images, onChange }) {
 
 // ─── Export (PNG/PDF via html2canvas + jsPDF — works on Vercel) ───────────────
 async function exportCard(tradeId, format = "png") {
+  if (typeof document === "undefined") return;
+
   // Dynamic import to avoid SSR issues
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
     import("html2canvas"),
