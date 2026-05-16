@@ -162,6 +162,29 @@ const TEXT = {
     p_calm: "Bình tĩnh, theo plan",
     p_exitEarly: "Thoát sớm vì sợ",
     p_letRun: "Để lệnh chạy tốt",
+
+    weeklyReview: "Weekly Review",
+    currentWeek: "Tuần hiện tại",
+    previousWeek: "Tuần trước",
+    nextWeek: "Tuần sau",
+    weekRange: "Khoảng thời gian",
+    planFollowRate: "Tỷ lệ theo plan",
+    followedPlanWR: "WR khi theo plan",
+    notFollowedPlanWR: "WR khi không theo plan",
+    mostRepeatedMistake: "Lỗi lặp lại nhiều nhất",
+    noMistakeData: "Chưa có lỗi nào được ghi nhận",
+    bestSetup: "Setup nổi bật",
+    mostUsedSetup: "Setup dùng nhiều nhất",
+    suggestedFocus: "Gợi ý tập trung tuần tới",
+    noWeeklyTrades: "Chưa có trade nào trong tuần này.",
+    ruleNotes: "Rule notes",
+    tradeLessons: "Lessons trong tuần",
+    noLessonData: "Chưa có lesson nào.",
+    noRuleNoteData: "Chưa có rule note nào.",
+    weeklyInsightGood: "Tuần này bạn đang follow plan khá tốt. Tiếp tục giữ số lượng lệnh vừa phải và chỉ trade setup rõ ràng.",
+    weeklyInsightNoPlan: "Bạn có nhiều lệnh chưa follow plan. Tuần tới nên giảm số lệnh và chỉ trade khi checklist đủ điều kiện.",
+    weeklyInsightMistake: "Lỗi lặp lại nhiều nhất tuần này là",
+    weeklyInsightNoData: "Hãy ghi thêm Followed Plan và Mistake Tags để Weekly Review có insight tốt hơn.",
   },
 
   en: {
@@ -307,7 +330,29 @@ const TEXT = {
     p_calm: "Calm, followed the plan",
     p_exitEarly: "Exited early because of fear",
     p_letRun: "Let winners run",
-  },
+    weeklyReview: "Weekly Review",
+    currentWeek: "Current week",
+    previousWeek: "Previous week",
+    nextWeek: "Next week",
+    weekRange: "Week range",
+    planFollowRate: "Plan follow rate",
+    followedPlanWR: "WR when following plan",
+    notFollowedPlanWR: "WR when not following plan",
+    mostRepeatedMistake: "Most repeated mistake",
+    noMistakeData: "No mistakes recorded yet",
+    bestSetup: "Best setup",
+    mostUsedSetup: "Most used setup",
+    suggestedFocus: "Suggested focus for next week",
+    noWeeklyTrades: "No trades recorded this week.",
+    ruleNotes: "Rule notes",
+    tradeLessons: "Lessons this week",
+    noLessonData: "No lessons recorded yet.",
+    noRuleNoteData: "No rule notes recorded yet.",
+    weeklyInsightGood: "You followed your plan well this week. Keep your trade count controlled and only take clear setups.",
+    weeklyInsightNoPlan: "You had several trades that did not follow the plan. Next week, reduce trade frequency and only trade when your checklist is complete.",
+    weeklyInsightMistake: "Your most repeated mistake this week is",
+    weeklyInsightNoData: "Add Followed Plan and Mistake Tags to get better weekly review insights.",
+      },
 };
 
 const tOf = (lang, key) => TEXT[lang]?.[key] || TEXT.vi[key] || key;
@@ -429,6 +474,54 @@ const validatePnl = (result, pnl, t = key => tOf("vi", key)) => {
   }
 
   return true;
+};
+
+const parseDateKey = dateStr => {
+  if (!dateStr) return null;
+  const [y, m, d] = String(dateStr).split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+};
+
+const toDateKey = date => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const getWeekRange = (offset = 0) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const day = today.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const start = new Date(today);
+  start.setDate(today.getDate() + diffToMonday + offset * 7);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return {
+    start,
+    end,
+    startKey: toDateKey(start),
+    endKey: toDateKey(end),
+  };
+};
+
+const isDateInRange = (dateStr, startKey, endKey) => {
+  if (!dateStr) return false;
+  return dateStr >= startKey && dateStr <= endKey;
+};
+
+const calcWR = trades => {
+  const withResult = trades.filter(trade => trade.result);
+  if (!withResult.length) return "—";
+
+  const wins = withResult.filter(trade => trade.result === "Win").length;
+  return ((wins / withResult.length) * 100).toFixed(0);
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -2522,6 +2615,515 @@ function DayModal({ dateStr, dayTrades, setups, onClose, onEdit, onDelete, lang,
   );
 }
 
+function WeeklyReview({ trades, setups, lang, t }) {
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const { startKey, endKey } = useMemo(
+    () => getWeekRange(weekOffset),
+    [weekOffset]
+  );
+
+  const weekTrades = useMemo(() => {
+    return trades.filter(trade => isDateInRange(trade.date, startKey, endKey));
+  }, [trades, startKey, endKey]);
+
+  const withResult = weekTrades.filter(trade => trade.result);
+  const wins = withResult.filter(trade => trade.result === "Win").length;
+  const losses = withResult.filter(trade => trade.result === "Loss").length;
+  const be = withResult.filter(trade => trade.result === "BE").length;
+  const wr = calcWR(weekTrades);
+
+  const followedYes = weekTrades.filter(trade => trade.followedPlan === "Yes").length;
+  const followedNo = weekTrades.filter(trade => trade.followedPlan === "No").length;
+  const followedPartial = weekTrades.filter(
+    trade => trade.followedPlan === "Partially"
+  ).length;
+
+  const disciplineTotal = followedYes + followedNo + followedPartial;
+
+  const planFollowRate = disciplineTotal
+    ? ((followedYes / disciplineTotal) * 100).toFixed(0)
+    : "—";
+
+  const followedTrades = weekTrades.filter(trade => trade.followedPlan === "Yes");
+  const notFollowedTrades = weekTrades.filter(trade => trade.followedPlan === "No");
+
+  const followedWR = calcWR(followedTrades);
+  const notFollowedWR = calcWR(notFollowedTrades);
+
+  const mistakeStats = MISTAKE_OPTIONS.map(m => ({
+    value: m.value,
+    label: t(m.key),
+    count: weekTrades.filter(trade =>
+      (trade.mistakeTags || []).includes(m.value)
+    ).length,
+  }))
+    .filter(m => m.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const topMistake = mistakeStats[0];
+
+  const setupStats = setups
+    .map(setup => {
+      const setupTrades = weekTrades.filter(trade =>
+        (trade.selectedSetupIds || []).includes(setup.id)
+      );
+
+      return {
+        id: setup.id,
+        name: setup.name,
+        count: setupTrades.length,
+        wr: calcWR(setupTrades),
+        wins: setupTrades.filter(trade => trade.result === "Win").length,
+      };
+    })
+    .filter(setup => setup.count > 0)
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return b.wins - a.wins;
+    });
+
+  const mostUsedSetup = setupStats[0];
+
+  const ruleNotes = weekTrades
+    .filter(trade => trade.ruleBrokenNote)
+    .map(trade => ({
+      id: trade.id,
+      date: trade.date,
+      ticker: trade.ticker,
+      note: trade.ruleBrokenNote,
+    }));
+
+  const lessons = weekTrades
+    .filter(trade => trade.lesson)
+    .map(trade => ({
+      id: trade.id,
+      date: trade.date,
+      ticker: trade.ticker,
+      lesson: trade.lesson,
+    }));
+
+  const insight = (() => {
+    if (!weekTrades.length) return t("noWeeklyTrades");
+
+    if (topMistake) {
+      return `${t("weeklyInsightMistake")}: ${topMistake.label}.`;
+    }
+
+    if (followedNo > followedYes && followedNo > 0) {
+      return t("weeklyInsightNoPlan");
+    }
+
+    if (disciplineTotal > 0 && Number(planFollowRate) >= 70) {
+      return t("weeklyInsightGood");
+    }
+
+    return t("weeklyInsightNoData");
+  })();
+
+  const locale = lang === "en" ? "en-US" : "vi-VN";
+
+  const niceRange = `${parseDateKey(startKey)?.toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+  })} - ${parseDateKey(endKey)?.toLocaleDateString(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })}`;
+
+  const MiniCard = ({ label, value, sub, color }) => (
+    <div
+      style={{
+        background: "#f7f7f5",
+        borderRadius: 10,
+        padding: "12px 14px",
+        border: "0.5px solid #e5e5e5",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 11,
+          color: "#aaa",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </div>
+
+      <div style={{ fontSize: 22, fontWeight: 700, color: color || "#111" }}>
+        {value}
+      </div>
+
+      {sub && (
+        <div style={{ fontSize: 12, color: "#999", marginTop: 3 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "0.5px solid #e5e5e5",
+        borderRadius: 14,
+        padding: "16px 18px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "center",
+          marginBottom: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>
+            {t("weeklyReview")}
+          </div>
+
+          <div style={{ fontSize: 12, color: "#999", marginTop: 3 }}>
+            {t("weekRange")}: {niceRange}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => setWeekOffset(w => w - 1)}
+            style={{ ...btnStyle, fontSize: 12 }}
+          >
+            ← {t("previousWeek")}
+          </button>
+
+          {weekOffset !== 0 && (
+            <button
+              onClick={() => setWeekOffset(0)}
+              style={{ ...btnStyle, fontSize: 12 }}
+            >
+              {t("currentWeek")}
+            </button>
+          )}
+
+          <button
+            onClick={() => setWeekOffset(w => w + 1)}
+            style={{ ...btnStyle, fontSize: 12 }}
+          >
+            {t("nextWeek")} →
+          </button>
+        </div>
+      </div>
+
+      {weekTrades.length === 0 ? (
+        <div
+          style={{
+            textAlign: "center",
+            color: "#bbb",
+            padding: "36px 0",
+            fontSize: 14,
+            background: "#f7f7f5",
+            borderRadius: 10,
+          }}
+        >
+          {t("noWeeklyTrades")}
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 10,
+              marginBottom: 16,
+            }}
+          >
+            <MiniCard
+              label={t("totalTrades")}
+              value={weekTrades.length}
+              sub={`${wins}W / ${losses}L / ${be}BE`}
+            />
+
+            <MiniCard
+              label={t("winRate")}
+              value={`${wr}%`}
+              color="#3B6D11"
+            />
+
+            <MiniCard
+              label={t("planFollowRate")}
+              value={`${planFollowRate}%`}
+              sub={`${followedYes} ${t("followedYes")} / ${followedNo} ${t("followedNo")}`}
+              color="#185FA5"
+            />
+
+            <MiniCard
+              label={t("mostRepeatedMistake")}
+              value={topMistake ? topMistake.count : "—"}
+              sub={topMistake ? topMistake.label : t("noMistakeData")}
+              color={topMistake ? "#8A4B12" : "#999"}
+            />
+          </div>
+
+          <div
+            style={{
+              background: "#EBF4FD",
+              border: "0.5px solid #85B7EB",
+              color: "#185FA5",
+              borderRadius: 10,
+              padding: "12px 14px",
+              fontSize: 13,
+              lineHeight: 1.6,
+              marginBottom: 16,
+              fontWeight: 500,
+            }}
+          >
+            {insight}
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 18,
+              marginBottom: 18,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#888",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                {t("followedPlan")}
+              </div>
+
+              <div
+                style={{
+                  background: "#f7f7f5",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                  fontSize: 13,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>{t("followedYes")}</span>
+                  <span style={{ color: "#3B6D11", fontWeight: 700 }}>
+                    {followedYes} · {followedWR}% WR
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>{t("followedNo")}</span>
+                  <span style={{ color: "#A32D2D", fontWeight: 700 }}>
+                    {followedNo} · {notFollowedWR}% WR
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>{t("followedPartial")}</span>
+                  <span style={{ color: "#854F0B", fontWeight: 700 }}>
+                    {followedPartial}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#888",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                {t("mostUsedSetup")}
+              </div>
+
+              <div
+                style={{
+                  background: "#f7f7f5",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                  fontSize: 13,
+                  minHeight: 78,
+                }}
+              >
+                {mostUsedSetup ? (
+                  <>
+                    <div style={{ fontWeight: 700, color: "#111", marginBottom: 6 }}>
+                      {mostUsedSetup.name}
+                    </div>
+
+                    <div style={{ color: "#999" }}>
+                      {mostUsedSetup.count} {t("tradeUnit")} · {mostUsedSetup.wr}% WR
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ color: "#bbb" }}>{t("noData")}</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 18,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#888",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                {t("mistakes")}
+              </div>
+
+              {mistakeStats.length === 0 ? (
+                <div style={{ fontSize: 13, color: "#bbb" }}>
+                  {t("noMistakeData")}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#fffaf5",
+                    border: "0.5px solid #f0d8bd",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                    fontSize: 13,
+                  }}
+                >
+                  {mistakeStats.slice(0, 5).map(m => (
+                    <div
+                      key={m.value}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        padding: "7px 0",
+                        borderBottom: "0.5px solid #f5e3cf",
+                      }}
+                    >
+                      <span>{m.label}</span>
+                      <span style={{ color: "#8A4B12", fontWeight: 700 }}>
+                        {m.count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#888",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                {t("tradeLessons")}
+              </div>
+
+              {lessons.length === 0 ? (
+                <div style={{ fontSize: 13, color: "#bbb" }}>
+                  {t("noLessonData")}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#f7f7f5",
+                    borderRadius: 10,
+                    padding: "10px 14px",
+                    fontSize: 13,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
+                  {lessons.slice(0, 4).map(item => (
+                    <div key={item.id}>
+                      <div style={{ color: "#aaa", fontSize: 11, marginBottom: 2 }}>
+                        {item.date} · {item.ticker || "—"}
+                      </div>
+                      <div style={{ color: "#333", lineHeight: 1.5 }}>
+                        {item.lesson}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {ruleNotes.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "#888",
+                  textTransform: "uppercase",
+                  marginBottom: 8,
+                }}
+              >
+                {t("ruleNotes")}
+              </div>
+
+              <div
+                style={{
+                  background: "#FCEBEB",
+                  border: "0.5px solid #F09595",
+                  borderRadius: 10,
+                  padding: "10px 14px",
+                  fontSize: 13,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                {ruleNotes.slice(0, 5).map(item => (
+                  <div key={item.id}>
+                    <div style={{ color: "#A32D2D", fontSize: 11, marginBottom: 2 }}>
+                      {item.date} · {item.ticker || "—"}
+                    </div>
+                    <div style={{ color: "#333", lineHeight: 1.5 }}>
+                      {item.note}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Combined Stats + Calendar Tab ───────────────────────────────────────────
 function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
   const [fromDate, setFromDate] = useState("");
@@ -2603,6 +3205,8 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
           {t("tradeUnit")}
         </div>
       </div>
+
+      <WeeklyReview trades={trades} setups={setups} lang={lang} t={t} />
 
       <CalendarView
         trades={filteredTrades}
