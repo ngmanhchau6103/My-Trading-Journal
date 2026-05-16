@@ -1,25 +1,22 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 
-const TIMEFRAMES = ["1M", "3M", "5M", "15M", "30M", "1H", "4H", "D", "W"];
-const PSYCHOLOGY_OPTIONS = ["Tự tin, kiên nhẫn", "FOMO", "Revenge trade", "Hồi hộp, lo lắng", "Overconfident", "Do dự, vào trễ", "Bình tĩnh, theo plan", "Thoát sớm vì sợ", "Để lệnh chạy tốt"];
-
+// ─── Constants ────────────────────────────────────────────────────────────────
+const TIMEFRAMES = ["1M","3M","5M","15M","30M","1H","4H","D","W"];
+const PSYCHOLOGY_OPTIONS = ["Tự tin, kiên nhẫn","FOMO","Revenge trade","Hồi hộp, lo lắng","Overconfident","Do dự, vào trễ","Bình tĩnh, theo plan","Thoát sớm vì sợ","Để lệnh chạy tốt"];
 const STORAGE_KEY  = "my_journal_trades";
 const SETUPS_KEY   = "my_journal_setups";
 const SESSIONS_KEY = "my_journal_sessions";
+const DEFAULT_SESSIONS = ["Asia","London","Pre-market NY AM","NY AM Macro 09:45–10:15","NY AM Macro 10:45–11:15"];
 
-const DEFAULT_SESSIONS = ["Asia", "London", "Pre-market NY AM", "NY AM Macro 09:45–10:15", "NY AM Macro 10:45–11:15"];
+// ─── Storage helpers ──────────────────────────────────────────────────────────
+const load    = (key, fallback) => { try { const v = localStorage.getItem(key); return v != null ? JSON.parse(v) : fallback; } catch { return fallback; } };
+const persist = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
 
-const load    = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
-const persist = (key, val) => localStorage.setItem(key, JSON.stringify(val));
-
+// ─── emptyForm: id assigned only on save ─────────────────────────────────────
 const emptyForm = () => ({
-  id: Date.now(),
   date: new Date().toISOString().slice(0, 10),
   ticker: "", position: "",
-  selectedSetupIds: [],
-  stepData: {},
+  selectedSetupIds: [], stepData: {},
   entryTF: "", session: "",
   psychologyTags: [], psychology: "",
   lesson: "", images: [], result: "", pnl: "",
@@ -75,29 +72,41 @@ function ImageUpload({ images, onChange }) {
   );
 }
 
-// ─── Export ───────────────────────────────────────────────────────────────────
+// ─── Export (PNG/PDF via html2canvas + jsPDF — works on Vercel) ───────────────
 async function exportCard(tradeId, format = "png") {
+  // Dynamic import to avoid SSR issues
+  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]).catch(() => [{ default: null }, { default: null }]);
+
   const el = document.getElementById(`export-card-${tradeId}`);
-  if (!el) return;
+  if (!el || !html2canvas) { alert("Không thể export, thiếu thư viện."); return; }
   el.style.display = "block";
-  await new Promise(r => setTimeout(r, 150));
-  const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
-  el.style.display = "none";
-  if (format === "pdf") {
-    const imgData = canvas.toDataURL("image/png");
-    const mmW = (canvas.width / 2) * 0.2646, mmH = (canvas.height / 2) * 0.2646;
-    const pdf = new jsPDF({ orientation: mmW > mmH ? "landscape" : "portrait", unit: "mm", format: [mmW, mmH] });
-    pdf.addImage(imgData, "PNG", 0, 0, mmW, mmH);
-    pdf.save(`trade-${tradeId}.pdf`);
-  } else {
-    const a = document.createElement("a");
-    a.download = `trade-${tradeId}.png`;
-    a.href = canvas.toDataURL("image/png");
-    a.click();
+  await new Promise(r => setTimeout(r, 200));
+  try {
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+    el.style.display = "none";
+    if (format === "pdf" && jsPDF) {
+      const imgData = canvas.toDataURL("image/png");
+      const mmW = (canvas.width / 2) * 0.2646, mmH = (canvas.height / 2) * 0.2646;
+      const pdf = new jsPDF({ orientation: mmW > mmH ? "landscape" : "portrait", unit: "mm", format: [mmW, mmH] });
+      pdf.addImage(imgData, "PNG", 0, 0, mmW, mmH);
+      pdf.save(`trade-${tradeId}.pdf`);
+    } else {
+      const a = document.createElement("a");
+      a.download = `trade-${tradeId}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    }
+  } catch (err) {
+    el.style.display = "none";
+    console.error(err);
+    alert("Export thất bại: " + err.message);
   }
 }
 
-// ─── Export Card (hidden) ─────────────────────────────────────────────────────
+// ─── Export Card (hidden, rendered once per trade) ────────────────────────────
 function ExportCard({ trade, setups }) {
   const pos = trade.position;
   const posStyle = pos === "Buy" ? { background: "#EAF3DE", color: "#3B6D11", border: "1px solid #97C459" } : { background: "#FCEBEB", color: "#A32D2D", border: "1px solid #F09595" };
@@ -149,19 +158,17 @@ function ExportCard({ trade, setups }) {
 function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
   const isEditing = !!initial;
   const [flowStep, setFlowStep] = useState(isEditing ? "form" : "pick");
-  const [form, setForm] = useState(initial ? { ...emptyForm(), ...initial } : emptyForm());
+  const [form, setForm] = useState(() => initial ? { ...emptyForm(), ...initial } : emptyForm());
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const toggleArr = (k, v) => { const a = form[k] || []; set(k, a.includes(v) ? a.filter(x => x !== v) : [...a, v]); };
   const handleImages = useCallback(u => setForm(f => ({ ...f, images: typeof u === "function" ? u(f.images) : u })), []);
-
-  const setStepData = (setupId, idx, val) =>
+  const setStepData  = (setupId, idx, val) =>
     setForm(f => ({ ...f, stepData: { ...f.stepData, [setupId]: { ...(f.stepData?.[setupId] || {}), [idx]: val } } }));
 
   const isBuy = form.position === "Buy";
   const selectedSetupIds = form.selectedSetupIds || [];
   const selectedSetups = setups.filter(s => selectedSetupIds.includes(s.id));
-
   const toggleSetup = id => {
     const curr = form.selectedSetupIds || [];
     set("selectedSetupIds", curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]);
@@ -171,8 +178,6 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
   if (flowStep === "pick") {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 16 }}>
-
-        {/* Buy / Sell */}
         <div>
           <div style={{ fontSize: 12, color: "#aaa", textAlign: "center", marginBottom: 12 }}>Chọn hướng giao dịch</div>
           <div style={{ display: "flex", gap: 14, justifyContent: "center" }}>
@@ -196,16 +201,10 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
             })}
           </div>
         </div>
-
-        {/* Setup list */}
         <div>
-          <div style={{ fontSize: 12, color: "#aaa", textAlign: "center", marginBottom: 12 }}>
-            Chọn setup / chiến lược <span style={{ fontSize: 11 }}>(có thể chọn nhiều)</span>
-          </div>
+          <div style={{ fontSize: 12, color: "#aaa", textAlign: "center", marginBottom: 12 }}>Chọn setup / chiến lược <span style={{ fontSize: 11 }}>(có thể chọn nhiều)</span></div>
           {setups.length === 0
-            ? <div style={{ textAlign: "center", fontSize: 13, color: "#bbb", padding: "20px 0", background: "#f7f7f5", borderRadius: 10 }}>
-                Chưa có setup nào. Vào tab <strong>Thiết lập</strong> để tạo setup.
-              </div>
+            ? <div style={{ textAlign: "center", fontSize: 13, color: "#bbb", padding: "20px 0", background: "#f7f7f5", borderRadius: 10 }}>Chưa có setup nào. Vào tab <strong>Thiết lập</strong> để tạo setup.</div>
             : <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {setups.map(setup => {
                   const selected = selectedSetupIds.includes(setup.id);
@@ -218,16 +217,12 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
                       boxShadow: selected ? "0 0 0 3px rgba(24,95,165,0.08)" : "0 1px 3px rgba(0,0,0,0.04)",
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: selected ? "#185FA5" : "#222" }}>
-                          {selected ? "✓ " : ""}{setup.name}
-                        </span>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: selected ? "#185FA5" : "#222" }}>{selected ? "✓ " : ""}{setup.name}</span>
                         <span style={{ fontSize: 11, color: "#aaa" }}>{setup.steps.length} bước</span>
                       </div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                         {setup.steps.slice(0, 4).map((s, i) => (
-                          <span key={i} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "#f1f1ee", color: "#666", border: "0.5px solid #ddd" }}>
-                            {i + 1}. {s.label}
-                          </span>
+                          <span key={i} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 10, background: "#f1f1ee", color: "#666", border: "0.5px solid #ddd" }}>{i + 1}. {s.label}</span>
                         ))}
                         {setup.steps.length > 4 && <span style={{ fontSize: 11, color: "#bbb" }}>+{setup.steps.length - 4} nữa</span>}
                       </div>
@@ -237,16 +232,9 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
               </div>
           }
         </div>
-
         <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
           {onCancel && <button onClick={onCancel} style={{ ...btnStyle, color: "#aaa" }}>Huỷ</button>}
-          <button
-            onClick={() => setFlowStep("form")}
-            disabled={!form.position}
-            style={{ ...primaryBtn, opacity: form.position ? 1 : 0.4, cursor: form.position ? "pointer" : "not-allowed" }}
-          >
-            Tiếp tục →
-          </button>
+          <button onClick={() => setFlowStep("form")} disabled={!form.position} style={{ ...primaryBtn, opacity: form.position ? 1 : 0.4, cursor: form.position ? "pointer" : "not-allowed" }}>Tiếp tục →</button>
         </div>
       </div>
     );
@@ -255,31 +243,18 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
   // ── Form screen ───────────────────────────────────────────────────────────
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-
-      {/* Top bar */}
       {!isEditing && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", paddingBottom: 12, borderBottom: "0.5px solid #f0f0f0" }}>
           <button onClick={() => setFlowStep("pick")} style={{ ...btnStyle, color: "#aaa", padding: "4px 10px", fontSize: 12 }}>← Đổi</button>
-          <span style={{
-            padding: "3px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600,
-            background: isBuy ? "#EAF3DE" : "#FCEBEB",
-            color: isBuy ? "#3B6D11" : "#A32D2D",
-            border: `1px solid ${isBuy ? "#97C459" : "#F09595"}`,
-          }}>
+          <span style={{ padding: "3px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, background: isBuy ? "#EAF3DE" : "#FCEBEB", color: isBuy ? "#3B6D11" : "#A32D2D", border: `1px solid ${isBuy ? "#97C459" : "#F09595"}` }}>
             {isBuy ? "▲ Buy" : "▼ Sell"}
           </span>
           {selectedSetups.map(s => (
-            <span key={s.id} style={{ padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: "#EBF4FD", color: "#185FA5", border: "1px solid #85B7EB" }}>
-              {s.name}
-            </span>
+            <span key={s.id} style={{ padding: "3px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, background: "#EBF4FD", color: "#185FA5", border: "1px solid #85B7EB" }}>{s.name}</span>
           ))}
-          {selectedSetups.length === 0 && (
-            <span style={{ fontSize: 12, color: "#bbb" }}>Không có setup</span>
-          )}
+          {selectedSetups.length === 0 && <span style={{ fontSize: 12, color: "#bbb" }}>Không có setup</span>}
         </div>
       )}
-
-      {/* Date + Ticker */}
       <SecTitle txt="Thông tin lệnh" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
@@ -291,35 +266,24 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
           <input type="text" placeholder="NQ, ES, EURUSD..." value={form.ticker} onChange={e => set("ticker", e.target.value.toUpperCase())} style={inp} />
         </div>
       </div>
-
-      {/* Position picker only when editing */}
       {isEditing && (
         <div>
           <div style={lbl}>Position</div>
           <div style={{ display: "flex", gap: 8 }}>
             {["Buy", "Sell"].map(p => (
-              <button key={p} onClick={() => set("position", p)} style={{
-                flex: 1, padding: "7px 0", cursor: "pointer", fontWeight: 500, fontSize: 14, borderRadius: 8, fontFamily: "inherit",
-                background: form.position === p ? (p === "Buy" ? "#EAF3DE" : "#FCEBEB") : "#fff",
-                color: form.position === p ? (p === "Buy" ? "#3B6D11" : "#A32D2D") : "#777",
-                border: `1.5px solid ${form.position === p ? (p === "Buy" ? "#97C459" : "#F09595") : "#ddd"}`,
-              }}>
+              <button key={p} onClick={() => set("position", p)} style={{ flex: 1, padding: "7px 0", cursor: "pointer", fontWeight: 500, fontSize: 14, borderRadius: 8, fontFamily: "inherit", background: form.position === p ? (p === "Buy" ? "#EAF3DE" : "#FCEBEB") : "#fff", color: form.position === p ? (p === "Buy" ? "#3B6D11" : "#A32D2D") : "#777", border: `1.5px solid ${form.position === p ? (p === "Buy" ? "#97C459" : "#F09595") : "#ddd"}` }}>
                 {p === "Buy" ? "▲ Buy" : "▼ Sell"}
               </button>
             ))}
           </div>
         </div>
       )}
-
-      {/* Setup steps */}
       {selectedSetups.length > 0 && (
         <>
           <SecTitle txt="Lý do vào lệnh" />
           {selectedSetups.map(setup => (
             <div key={setup.id} style={{ marginBottom: 4 }}>
-              {selectedSetups.length > 1 && (
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#185FA5", marginBottom: 8 }}>{setup.name}</div>
-              )}
+              {selectedSetups.length > 1 && <div style={{ fontSize: 12, fontWeight: 600, color: "#185FA5", marginBottom: 8 }}>{setup.name}</div>}
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {setup.steps.map((step, idx) => {
                   const val = form.stepData?.[setup.id]?.[idx];
@@ -327,20 +291,11 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
                     <div key={idx}>
                       <div style={lbl}>{idx + 1}. {step.label}</div>
                       {step.type === "check"
-                        ? (
-                          <label style={{
-                            display: "flex", alignItems: "center", gap: 10, cursor: "pointer",
-                            padding: "8px 12px", borderRadius: 8,
-                            border: `1px solid ${val ? "#97C459" : "#e5e5e5"}`,
-                            background: val ? "#f0fae8" : "#fff",
-                            transition: "all 0.15s",
-                          }}>
+                        ? <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", padding: "8px 12px", borderRadius: 8, border: `1px solid ${val ? "#97C459" : "#e5e5e5"}`, background: val ? "#f0fae8" : "#fff", transition: "all 0.15s" }}>
                             <input type="checkbox" checked={!!val} onChange={() => setStepData(setup.id, idx, !val)} style={{ width: 16, height: 16, accentColor: "#3B6D11", flexShrink: 0 }} />
                             <span style={{ fontSize: 13, color: val ? "#3B6D11" : "#aaa" }}>{val ? "Đã xác nhận" : "Chưa xác nhận"}</span>
                           </label>
-                        ) : (
-                          <textarea rows={2} placeholder={step.placeholder || `Nhập ${step.label.toLowerCase()}...`} value={val || ""} onChange={e => setStepData(setup.id, idx, e.target.value)} style={{ ...inp, resize: "vertical" }} />
-                        )}
+                        : <textarea rows={2} placeholder={step.placeholder || `Nhập ${step.label.toLowerCase()}...`} value={val || ""} onChange={e => setStepData(setup.id, idx, e.target.value)} style={{ ...inp, resize: "vertical" }} />}
                     </div>
                   );
                 })}
@@ -349,8 +304,6 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
           ))}
         </>
       )}
-
-      {/* Entry TF + Session */}
       <SecTitle txt="Thời gian vào lệnh" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
@@ -367,20 +320,13 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
           </select>
         </div>
       </div>
-
-      {/* Sau lệnh */}
       <SecTitle txt="Sau lệnh" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
         <div>
           <div style={lbl}>Kết quả</div>
           <div style={{ display: "flex", gap: 8 }}>
             {["Win", "Loss", "BE"].map(r => (
-              <button key={r} onClick={() => set("result", r)} style={{
-                flex: 1, padding: "6px 0", cursor: "pointer", fontSize: 13, fontWeight: 500, borderRadius: 8, fontFamily: "inherit",
-                background: form.result === r ? (r === "Win" ? "#EAF3DE" : r === "Loss" ? "#FCEBEB" : "#FAEEDA") : "#fff",
-                color: form.result === r ? (r === "Win" ? "#3B6D11" : r === "Loss" ? "#A32D2D" : "#854F0B") : "#777",
-                border: `1.5px solid ${form.result === r ? (r === "Win" ? "#97C459" : r === "Loss" ? "#F09595" : "#EF9F27") : "#ddd"}`,
-              }}>{r}</button>
+              <button key={r} onClick={() => set("result", r)} style={{ flex: 1, padding: "6px 0", cursor: "pointer", fontSize: 13, fontWeight: 500, borderRadius: 8, fontFamily: "inherit", background: form.result === r ? (r === "Win" ? "#EAF3DE" : r === "Loss" ? "#FCEBEB" : "#FAEEDA") : "#fff", color: form.result === r ? (r === "Win" ? "#3B6D11" : r === "Loss" ? "#A32D2D" : "#854F0B") : "#777", border: `1.5px solid ${form.result === r ? (r === "Win" ? "#97C459" : r === "Loss" ? "#F09595" : "#EF9F27") : "#ddd"}` }}>{r}</button>
             ))}
           </div>
         </div>
@@ -389,7 +335,6 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
           <input type="text" placeholder="+2R hoặc +250$" value={form.pnl} onChange={e => set("pnl", e.target.value)} style={inp} />
         </div>
       </div>
-
       <div>
         <div style={lbl}>Tâm lý</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 6 }}>
@@ -397,17 +342,14 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
         </div>
         <input type="text" placeholder="Ghi thêm nếu cần..." value={form.psychology} onChange={e => set("psychology", e.target.value)} style={{ ...inp, fontSize: 13 }} />
       </div>
-
       <div>
         <div style={lbl}>Bài học rút ra</div>
         <textarea rows={2} placeholder="vd: Không trade revenge, chờ confirmation..." value={form.lesson} onChange={e => set("lesson", e.target.value)} style={{ ...inp, resize: "vertical" }} />
       </div>
-
       <div>
         <div style={lbl}>Hình ảnh chart (không giới hạn)</div>
         <ImageUpload images={form.images} onChange={handleImages} />
       </div>
-
       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 6 }}>
         {onCancel && <button onClick={onCancel} style={btnStyle}>Huỷ</button>}
         <button onClick={() => onSave(form)} style={primaryBtn}>Lưu lệnh</button>
@@ -417,6 +359,7 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
 }
 
 // ─── Trade Card ───────────────────────────────────────────────────────────────
+// FIX: ExportCard is only mounted when expanded, avoiding heavy DOM
 function TradeCard({ trade, onDelete, onEdit, setups }) {
   const [expanded, setExpanded] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -426,7 +369,8 @@ function TradeCard({ trade, onDelete, onEdit, setups }) {
 
   return (
     <>
-      <ExportCard trade={trade} setups={setups} />
+      {/* FIX: Only render hidden export card when expanded (avoids n×DOM bloat) */}
+      {expanded && <ExportCard trade={trade} setups={setups} />}
       <div style={{ background: "#fff", border: "0.5px solid #e5e5e5", borderRadius: 12, overflow: "hidden", marginBottom: 10, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
         <div style={{ padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => setExpanded(e => !e)}>
           <span style={{ fontSize: 13, color: "#999", minWidth: 88 }}>{trade.date}</span>
@@ -444,9 +388,7 @@ function TradeCard({ trade, onDelete, onEdit, setups }) {
               const filledCount = setup.steps.filter((_, i) => data[i] !== undefined && data[i] !== "" && data[i] !== false).length;
               return (
                 <div key={setup.id} style={{ background: "#f7f7f5", borderRadius: 8, padding: "10px 14px" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#555", marginBottom: 8 }}>
-                    {setup.name} <span style={{ color: "#bbb", fontWeight: 400 }}>· {filledCount}/{setup.steps.length} bước</span>
-                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#555", marginBottom: 8 }}>{setup.name} <span style={{ color: "#bbb", fontWeight: 400 }}>· {filledCount}/{setup.steps.length} bước</span></div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {setup.steps.map((step, idx) => (
                       <div key={idx} style={{ fontSize: 13 }}>
@@ -482,6 +424,213 @@ function TradeCard({ trade, onDelete, onEdit, setups }) {
         )}
       </div>
     </>
+  );
+}
+
+// ─── History Tab with Filter ──────────────────────────────────────────────────
+function HistoryTab({ trades, setups, sessions, onDelete, onEdit }) {
+  const [search,    setSearch]    = useState("");
+  const [filterPos, setFilterPos] = useState("");
+  const [filterRes, setFilterRes] = useState("");
+  const [filterSes, setFilterSes] = useState("");
+
+  const filtered = useMemo(() => {
+    return trades.filter(t => {
+      if (filterPos && t.position !== filterPos) return false;
+      if (filterRes && t.result  !== filterRes)  return false;
+      if (filterSes && t.session !== filterSes)  return false;
+      if (search) {
+        const q = search.toLowerCase();
+        return (
+          (t.ticker   || "").toLowerCase().includes(q) ||
+          (t.lesson   || "").toLowerCase().includes(q) ||
+          (t.session  || "").toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [trades, search, filterPos, filterRes, filterSes]);
+
+  const chipFilter = (val, setVal, opts, colorMap) => (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {opts.map(o => {
+        const active = val === o;
+        const c = colorMap[o] || { bg: "#f1f1ee", text: "#555", border: "#ddd" };
+        return <button key={o} onClick={() => setVal(active ? "" : o)} style={{ fontSize: 12, padding: "3px 12px", cursor: "pointer", borderRadius: 20, background: active ? c.bg : "transparent", color: active ? c.text : "#888", border: `1px solid ${active ? c.border : "#ddd"}`, fontFamily: "inherit" }}>{o}</button>;
+      })}
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Filter bar */}
+      <div style={{ background: "#fff", border: "0.5px solid #e5e5e5", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        <input type="text" placeholder="🔍  Tìm ticker, bài học, session..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...inp, fontSize: 13 }} />
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div>
+            <div style={{ fontSize: 11, color: "#bbb", marginBottom: 5 }}>HƯỚNG</div>
+            {chipFilter(filterPos, setFilterPos, ["Buy","Sell"], { Buy: { bg: "#EAF3DE", text: "#3B6D11", border: "#97C459" }, Sell: { bg: "#FCEBEB", text: "#A32D2D", border: "#F09595" } })}
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: "#bbb", marginBottom: 5 }}>KẾT QUẢ</div>
+            {chipFilter(filterRes, setFilterRes, ["Win","Loss","BE"], { Win: { bg: "#EAF3DE", text: "#3B6D11", border: "#97C459" }, Loss: { bg: "#FCEBEB", text: "#A32D2D", border: "#F09595" }, BE: { bg: "#FAEEDA", text: "#854F0B", border: "#EF9F27" } })}
+          </div>
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <div style={{ fontSize: 11, color: "#bbb", marginBottom: 5 }}>SESSION</div>
+            <select value={filterSes} onChange={e => setFilterSes(e.target.value)} style={{ ...inp, fontSize: 12, padding: "4px 8px" }}>
+              <option value="">Tất cả</option>
+              {sessions.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+        {(search || filterPos || filterRes || filterSes) && (
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: "#aaa" }}>{filtered.length} / {trades.length} lệnh</span>
+            <button onClick={() => { setSearch(""); setFilterPos(""); setFilterRes(""); setFilterSes(""); }} style={{ ...btnStyle, fontSize: 12, padding: "3px 10px", color: "#888" }}>Xoá filter</button>
+          </div>
+        )}
+      </div>
+      {filtered.length === 0
+        ? <div style={{ textAlign: "center", color: "#bbb", padding: "60px 0", fontSize: 14 }}>{trades.length === 0 ? "Chưa có lệnh nào. Hãy thêm lệnh đầu tiên!" : "Không tìm thấy lệnh nào phù hợp."}</div>
+        : filtered.map(t => <TradeCard key={t.id} trade={t} onDelete={onDelete} onEdit={onEdit} setups={setups} />)
+      }
+    </div>
+  );
+}
+
+// ─── Calendar View ────────────────────────────────────────────────────────────
+function CalendarView({ trades, onSelectDay }) {
+  const today = new Date();
+  const [viewYear,  setViewYear]  = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-indexed
+
+  // Build map: "YYYY-MM-DD" → [trades]
+  const tradeMap = useMemo(() => {
+    const m = {};
+    trades.forEach(t => {
+      if (!m[t.date]) m[t.date] = [];
+      m[t.date].push(t);
+    });
+    return m;
+  }, [trades]);
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDay    = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+  // Shift so Monday=0
+  const startOffset = (firstDay + 6) % 7;
+
+  const prevMonth = () => { if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); } else setViewMonth(m => m - 1); };
+  const nextMonth = () => { if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); } else setViewMonth(m => m + 1); };
+
+  const monthName = new Date(viewYear, viewMonth, 1).toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
+  const DOW = ["T2","T3","T4","T5","T6","T7","CN"];
+
+  // Monthly summary
+  const monthTrades = trades.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
+  });
+  const mWins   = monthTrades.filter(t => t.result === "Win").length;
+  const mLosses = monthTrades.filter(t => t.result === "Loss").length;
+  const mBE     = monthTrades.filter(t => t.result === "BE").length;
+  const mWR     = monthTrades.filter(t => t.result).length
+    ? ((mWins / monthTrades.filter(t => t.result).length) * 100).toFixed(0)
+    : "—";
+
+  const cells = [];
+  for (let i = 0; i < startOffset; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <button onClick={prevMonth} style={{ ...btnStyle, padding: "5px 12px" }}>←</button>
+        <span style={{ fontWeight: 700, fontSize: 16, color: "#111" }}>{monthName}</span>
+        <button onClick={nextMonth} style={{ ...btnStyle, padding: "5px 12px" }}>→</button>
+      </div>
+
+      {/* Monthly summary chips */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#f1f1ee", color: "#555", border: "0.5px solid #ddd" }}>{monthTrades.length} lệnh</span>
+        <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#EAF3DE", color: "#3B6D11", border: "0.5px solid #97C459" }}>✓ {mWins} Win</span>
+        <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#FCEBEB", color: "#A32D2D", border: "0.5px solid #F09595" }}>✗ {mLosses} Loss</span>
+        {mBE > 0 && <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#FAEEDA", color: "#854F0B", border: "0.5px solid #EF9F27" }}>— {mBE} BE</span>}
+        <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#EBF4FD", color: "#185FA5", border: "0.5px solid #85B7EB" }}>WR {mWR}%</span>
+      </div>
+
+      {/* Day of week headers */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 4 }}>
+        {DOW.map(d => (
+          <div key={d} style={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: d === "CN" ? "#e57373" : "#bbb", padding: "4px 0" }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Day cells */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+        {cells.map((day, i) => {
+          if (!day) return <div key={`e-${i}`} />;
+          const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const dayTrades = tradeMap[dateStr] || [];
+          const wins   = dayTrades.filter(t => t.result === "Win").length;
+          const losses = dayTrades.filter(t => t.result === "Loss").length;
+          const be     = dayTrades.filter(t => t.result === "BE").length;
+          const noRes  = dayTrades.filter(t => !t.result).length;
+          const isToday = dateStr === today.toISOString().slice(0, 10);
+
+          // Day cell background: green if net positive, red if net negative, neutral if empty
+          let cellBg = "#f7f7f5", cellBorder = "#eee", textColor = "#333";
+          if (dayTrades.length > 0) {
+            if (wins > losses)       { cellBg = "#EAF3DE"; cellBorder = "#97C459"; textColor = "#2d5a0e"; }
+            else if (losses > wins)  { cellBg = "#FCEBEB"; cellBorder = "#F09595"; textColor = "#8c1f1f"; }
+            else if (be > 0)         { cellBg = "#FAEEDA"; cellBorder = "#EF9F27"; textColor = "#7a4400"; }
+            else                     { cellBg = "#EBF4FD"; cellBorder = "#85B7EB"; textColor = "#185FA5"; }
+          }
+
+          const isWeekend = i % 7 === 5 || i % 7 === 6;
+
+          return (
+            <div
+              key={dateStr}
+              onClick={() => dayTrades.length > 0 && onSelectDay(dateStr, dayTrades)}
+              style={{
+                minHeight: 64, padding: "6px 8px", borderRadius: 8, border: `1.5px solid ${isToday ? "#185FA5" : cellBorder}`,
+                background: cellBg, cursor: dayTrades.length > 0 ? "pointer" : "default",
+                boxShadow: isToday ? "0 0 0 2px rgba(24,95,165,0.18)" : "none",
+                transition: "all 0.12s", position: "relative",
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: isToday ? 700 : 500, color: isToday ? "#185FA5" : (isWeekend ? "#e57373" : textColor), marginBottom: 4 }}>{day}</div>
+              {dayTrades.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {wins   > 0 && <div style={{ fontSize: 10, color: "#3B6D11", fontWeight: 600 }}>✓ {wins}W</div>}
+                  {losses > 0 && <div style={{ fontSize: 10, color: "#A32D2D", fontWeight: 600 }}>✗ {losses}L</div>}
+                  {be     > 0 && <div style={{ fontSize: 10, color: "#854F0B", fontWeight: 600 }}>— {be}</div>}
+                  {noRes  > 0 && <div style={{ fontSize: 10, color: "#aaa" }}>○ {noRes}</div>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Day Detail Modal ─────────────────────────────────────────────────────────
+function DayModal({ dateStr, dayTrades, setups, onClose, onEdit, onDelete }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 999, display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
+      <div style={{ background: "#fff", borderRadius: "16px 16px 0 0", width: "100%", maxWidth: 780, maxHeight: "80vh", overflowY: "auto", padding: 24 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: "#111" }}>
+            {new Date(dateStr + "T00:00:00").toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          </div>
+          <button onClick={onClose} style={{ ...btnStyle, padding: "4px 12px", fontSize: 13, color: "#888" }}>Đóng ✕</button>
+        </div>
+        {dayTrades.map(t => <TradeCard key={t.id} trade={t} onDelete={id => { onDelete(id); if (dayTrades.length === 1) onClose(); }} onEdit={t => { onClose(); onEdit(t); }} setups={setups} />)}
+      </div>
+    </div>
   );
 }
 
@@ -601,7 +750,7 @@ function SetupEditor({ setup, onSave, onCancel, onDelete }) {
   );
 }
 
-// ─── Thiết lập Tab ────────────────────────────────────────────────────────────
+// ─── ThietLap Tab ─────────────────────────────────────────────────────────────
 function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave }) {
   const [editingId, setEditingId] = useState(null);
   const [editingSetup, setEditingSetup] = useState(null);
@@ -653,7 +802,6 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave }) {
         {editingId === "new" && <SetupEditor setup={null} onSave={handleSaveSetup} onCancel={() => setEditingId(null)} />}
         {editingId !== "new" && <button onClick={() => { setEditingSetup(null); setEditingId("new"); }} style={{ ...primaryBtn, marginTop: 4 }}>+ Tạo setup mới</button>}
       </div>
-
       <div>
         <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>Phiên giao dịch</div>
         <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>Thêm các phiên phù hợp với phương pháp của bạn.</div>
@@ -676,23 +824,38 @@ function ThietLapTab({ setups, onSetupsSave, sessions, onSessionsSave }) {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tab, setTab] = useState("new");
-  const [trades,   setTrades]   = useState(() => load(STORAGE_KEY,   []));
-  const [setups,   setSetups]   = useState(() => load(SETUPS_KEY,    []));
-  const [sessions, setSessions] = useState(() => load(SESSIONS_KEY,  DEFAULT_SESSIONS));
+  const [tab,       setTab]       = useState("new");
+  const [trades,    setTrades]    = useState(() => load(STORAGE_KEY,  []));
+  const [setups,    setSetups]    = useState(() => load(SETUPS_KEY,   []));
+  const [sessions,  setSessions]  = useState(() => load(SESSIONS_KEY, DEFAULT_SESSIONS));
   const [editTrade, setEditTrade] = useState(null);
+  const [dayModal,  setDayModal]  = useState(null); // { dateStr, dayTrades }
 
-  useEffect(() => { persist(STORAGE_KEY,   trades);   }, [trades]);
-  useEffect(() => { persist(SETUPS_KEY,    setups);   }, [setups]);
-  useEffect(() => { persist(SESSIONS_KEY,  sessions); }, [sessions]);
+  useEffect(() => { persist(STORAGE_KEY,  trades);   }, [trades]);
+  useEffect(() => { persist(SETUPS_KEY,   setups);   }, [setups]);
+  useEffect(() => { persist(SESSIONS_KEY, sessions); }, [sessions]);
 
-  const saveTrade   = form => {
-    setTrades(ts => editTrade ? ts.map(t => t.id === form.id ? form : t) : [{ ...form, id: Date.now() }, ...ts]);
+  // FIX: id assigned here on save, not inside emptyForm
+  const saveTrade = form => {
+    setTrades(ts => editTrade
+      ? ts.map(t => t.id === form.id ? form : t)
+      : [{ ...form, id: Date.now() }, ...ts]
+    );
     setEditTrade(null);
     setTab("history");
   };
-  const deleteTrade = id => { if (window.confirm("Xoá lệnh này?")) setTrades(ts => ts.filter(t => t.id !== id)); };
-  const startEdit   = trade => { setEditTrade(trade); setTab("new"); };
+  const deleteTrade = id => {
+    if (window.confirm("Xoá lệnh này?")) {
+      setTrades(ts => ts.filter(t => t.id !== id));
+      // Update day modal if open
+      if (dayModal) {
+        const remaining = dayModal.dayTrades.filter(t => t.id !== id);
+        if (remaining.length === 0) setDayModal(null);
+        else setDayModal({ ...dayModal, dayTrades: remaining });
+      }
+    }
+  };
+  const startEdit = trade => { setEditTrade(trade); setTab("new"); };
 
   const tabStyle = t => ({
     padding: "9px 22px", cursor: "pointer", fontSize: 14,
@@ -708,16 +871,31 @@ export default function App() {
       <div style={{ maxWidth: 780, margin: "0 auto", padding: "24px 20px" }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: "#111", marginBottom: 4 }}>My Trading Journal</h1>
         <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Time - Price - Consistency</p>
+
         <div style={{ display: "flex", borderBottom: "0.5px solid #e5e5e5", marginBottom: 24, overflowX: "auto" }}>
           <button style={tabStyle("new")}      onClick={() => { setEditTrade(null); setTab("new"); }}>+ Lệnh mới</button>
           <button style={tabStyle("history")}  onClick={() => setTab("history")}>Lịch sử ({trades.length})</button>
+          <button style={tabStyle("calendar")} onClick={() => setTab("calendar")}>📅 Calendar</button>
           <button style={tabStyle("stats")}    onClick={() => setTab("stats")}>Thống kê</button>
           <button style={tabStyle("thietlap")} onClick={() => setTab("thietlap")}>Thiết lập</button>
         </div>
+
         {tab === "new"      && <NewTradeFlow initial={editTrade} onSave={saveTrade} onCancel={editTrade ? () => { setEditTrade(null); setTab("history"); } : null} setups={setups} sessions={sessions} />}
-        {tab === "history"  && <div>{trades.length === 0 && <div style={{ textAlign: "center", color: "#bbb", padding: "60px 0", fontSize: 14 }}>Chưa có lệnh nào. Hãy thêm lệnh đầu tiên!</div>}{trades.map(t => <TradeCard key={t.id} trade={t} onDelete={deleteTrade} onEdit={startEdit} setups={setups} />)}</div>}
+        {tab === "history"  && <HistoryTab trades={trades} setups={setups} sessions={sessions} onDelete={deleteTrade} onEdit={startEdit} />}
+        {tab === "calendar" && <CalendarView trades={trades} onSelectDay={(dateStr, dayTrades) => setDayModal({ dateStr, dayTrades })} />}
         {tab === "stats"    && <Stats trades={trades} setups={setups} sessions={sessions} />}
         {tab === "thietlap" && <ThietLapTab setups={setups} onSetupsSave={setSetups} sessions={sessions} onSessionsSave={setSessions} />}
+
+        {dayModal && (
+          <DayModal
+            dateStr={dayModal.dateStr}
+            dayTrades={dayModal.dayTrades}
+            setups={setups}
+            onClose={() => setDayModal(null)}
+            onEdit={startEdit}
+            onDelete={deleteTrade}
+          />
+        )}
       </div>
     </div>
   );
