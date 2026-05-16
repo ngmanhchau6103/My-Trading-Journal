@@ -189,6 +189,20 @@ const TEXT = {
     weeklyInsightNoPlan: "Bạn có nhiều lệnh chưa follow plan. Tuần tới nên giảm số lệnh và chỉ trade khi checklist đủ điều kiện.",
     weeklyInsightMistake: "Lỗi lặp lại nhiều nhất tuần này là",
     weeklyInsightNoData: "Hãy ghi thêm Followed Plan và Mistake Tags để Weekly Review có insight tốt hơn.",
+
+    disciplineIssues: "Vấn đề kỷ luật",
+    cleanTrades: "Clean trades",
+    cleanTradeWR: "WR clean trades",
+    issueTradeWR: "WR khi có vấn đề kỷ luật",
+    aPlusTrades: "A+ trades",
+    goodLosses: "Good losses",
+    luckyWins: "Lucky wins",
+    badLosses: "Bad losses",
+    tradeQuality: "Chất lượng lệnh",
+
+    advancedStats: "Thống kê chi tiết",
+    showAdvancedStats: "Hiện thống kê chi tiết",
+    hideAdvancedStats: "Ẩn thống kê chi tiết",
   },
 
   en: {
@@ -360,6 +374,20 @@ const TEXT = {
     weeklyInsightNoPlan: "You had several trades that did not follow the plan. Next week, reduce trade frequency and only trade when your checklist is complete.",
     weeklyInsightMistake: "Your most repeated mistake this week is",
     weeklyInsightNoData: "Add Followed Plan and Mistake Tags to get better weekly review insights.",
+
+    disciplineIssues: "Discipline issues",
+    cleanTrades: "Clean trades",
+    cleanTradeWR: "Clean trade WR",
+    issueTradeWR: "Discipline issue WR",
+    aPlusTrades: "A+ trades",
+    goodLosses: "Good losses",
+    luckyWins: "Lucky wins",
+    badLosses: "Bad losses",
+    tradeQuality: "Trade quality",
+
+    advancedStats: "Advanced stats",
+    showAdvancedStats: "Show advanced stats",
+    hideAdvancedStats: "Hide advanced stats",
       },
 };
 
@@ -530,6 +558,39 @@ const calcWR = trades => {
 
   const wins = withResult.filter(trade => trade.result === "Win").length;
   return ((wins / withResult.length) * 100).toFixed(0);
+};
+
+const hasDisciplineIssue = trade => {
+  return (
+    trade.followedPlan === "No" ||
+    trade.followedPlan === "Partially" ||
+    (trade.mistakeTags || []).length > 0 ||
+    Boolean(String(trade.ruleBrokenNote || "").trim())
+  );
+};
+
+const isCleanTrade = trade => !hasDisciplineIssue(trade);
+
+const tradeQuality = trade => {
+  const issue = hasDisciplineIssue(trade);
+
+  if (!issue && trade.followedPlan === "Yes" && trade.result === "Win") {
+    return "A+";
+  }
+
+  if (!issue && trade.followedPlan === "Yes" && trade.result === "Loss") {
+    return "Good Loss";
+  }
+
+  if (issue && trade.result === "Win") {
+    return "Lucky Win";
+  }
+
+  if (issue && trade.result === "Loss") {
+    return "Bad Loss";
+  }
+
+  return "Unclassified";
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -2659,6 +2720,17 @@ function WeeklyReview({ trades, setups, lang, t }) {
   const followedWR = calcWR(followedTrades);
   const notFollowedWR = calcWR(notFollowedTrades);
 
+  const cleanTrades = weekTrades.filter(isCleanTrade);
+  const issueTrades = weekTrades.filter(hasDisciplineIssue);
+
+  const cleanWR = calcWR(cleanTrades);
+  const issueWR = calcWR(issueTrades);
+
+  const aPlusTrades = weekTrades.filter(trade => tradeQuality(trade) === "A+").length;
+  const goodLosses = weekTrades.filter(trade => tradeQuality(trade) === "Good Loss").length;
+  const luckyWins = weekTrades.filter(trade => tradeQuality(trade) === "Lucky Win").length;
+  const badLosses = weekTrades.filter(trade => tradeQuality(trade) === "Bad Loss").length;
+
   const mistakeStats = MISTAKE_OPTIONS.map(m => ({
     value: m.value,
     label: t(m.key),
@@ -2881,6 +2953,43 @@ function WeeklyReview({ trades, setups, lang, t }) {
 
           <div
             style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 10,
+              marginBottom: 16,
+            }}
+          >
+            <MiniCard
+              label={t("cleanTrades")}
+              value={cleanTrades.length}
+              sub={`${t("cleanTradeWR")}: ${cleanWR}%`}
+              color="#3B6D11"
+            />
+
+            <MiniCard
+              label={t("disciplineIssues")}
+              value={issueTrades.length}
+              sub={`${t("issueTradeWR")}: ${issueWR}%`}
+              color="#A32D2D"
+            />
+
+            <MiniCard
+              label={t("luckyWins")}
+              value={luckyWins}
+              sub={t("tradeQuality")}
+              color="#854F0B"
+            />
+
+            <MiniCard
+              label={t("badLosses")}
+              value={badLosses}
+              sub={t("tradeQuality")}
+              color="#A32D2D"
+            />
+          </div>
+
+          <div
+            style={{
               background: "#EBF4FD",
               border: "0.5px solid #85B7EB",
               color: "#185FA5",
@@ -2903,6 +3012,7 @@ function WeeklyReview({ trades, setups, lang, t }) {
               marginBottom: 18,
             }}
           >
+
             <div>
               <div
                 style={{
@@ -2996,6 +3106,7 @@ function WeeklyReview({ trades, setups, lang, t }) {
               gap: 18,
             }}
           >
+
             <div>
               <div
                 style={{
@@ -3136,6 +3247,7 @@ function WeeklyReview({ trades, setups, lang, t }) {
 function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [showAdvancedStats, setShowAdvancedStats] = useState(false);
 
   const filteredTrades = useMemo(() => {
     return trades.filter(trade => {
@@ -3223,7 +3335,50 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
         t={t}
       />
 
-      <Stats trades={filteredTrades} setups={setups} sessions={sessions} t={t} />
+      <div style={{ textAlign: "center" }}>
+        <button
+          onClick={() => setShowAdvancedStats(v => !v)}
+          style={{
+            ...btnStyle,
+            fontSize: 12,
+            color: "#666",
+            background: showAdvancedStats ? "#f1f1ee" : "#fff",
+          }}
+        >
+          {showAdvancedStats ? t("hideAdvancedStats") : t("showAdvancedStats")}
+        </button>
+      </div>
+
+      {showAdvancedStats && (
+        <div
+          style={{
+            background: "#fff",
+            border: "0.5px solid #e5e5e5",
+            borderRadius: 14,
+            padding: "16px 18px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#888",
+              marginBottom: 14,
+              textTransform: "uppercase",
+              letterSpacing: 0.3,
+            }}
+          >
+            {t("advancedStats")}
+          </div>
+
+          <Stats
+            trades={filteredTrades}
+            setups={setups}
+            sessions={sessions}
+            t={t}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -3444,6 +3599,17 @@ function Stats({ trades, setups, sessions, t }) {
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count);
 
+  const cleanTrades = trades.filter(isCleanTrade);
+  const issueTrades = trades.filter(hasDisciplineIssue);
+
+  const cleanWR = calcWR(cleanTrades);
+  const issueWR = calcWR(issueTrades);
+
+  const aPlusTrades = trades.filter(trade => tradeQuality(trade) === "A+").length;
+  const goodLosses = trades.filter(trade => tradeQuality(trade) === "Good Loss").length;
+  const luckyWins = trades.filter(trade => tradeQuality(trade) === "Lucky Win").length;
+  const badLosses = trades.filter(trade => tradeQuality(trade) === "Bad Loss").length;
+
   const StatCard = ({ label, val, color }) => (
     <div
       style={{
@@ -3523,6 +3689,29 @@ function Stats({ trades, setups, sessions, t }) {
         <StatCard label={t("winRate")} val={`${wr}%`} color="#3B6D11" />
         <StatCard label={t("winLossBE")} val={`${wins} / ${losses} / ${be}`} />
         <StatCard label={t("noResult")} val={trades.length - withResult.length} />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+        <StatCard
+          label={t("cleanTrades")}
+          val={`${cleanTrades.length} · ${cleanWR}% WR`}
+          color="#3B6D11"
+        />
+        <StatCard
+          label={t("disciplineIssues")}
+          val={`${issueTrades.length} · ${issueWR}% WR`}
+          color="#A32D2D"
+        />
+        <StatCard
+          label={t("luckyWins")}
+          val={luckyWins}
+          color="#854F0B"
+        />
+        <StatCard
+          label={t("badLosses")}
+          val={badLosses}
+          color="#A32D2D"
+        />
       </div>
 
       <SetupPerformance trades={trades} setups={setups} t={t} />
