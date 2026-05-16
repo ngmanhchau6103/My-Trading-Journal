@@ -381,7 +381,13 @@ function NewTradeFlow({ initial, onSave, onCancel, setups, sessions }) {
         </div>
         <div>
           <div style={lbl}>P&L (R hoặc $)</div>
-          <input type="text" placeholder="+2R hoặc +250$" value={form.pnl} onChange={e => set("pnl", e.target.value)} style={inp} />
+          <input
+            type="text"
+            placeholder={form.result === "Loss" ? "vd: 1R hoặc 98" : form.result === "BE" ? "vd: +0.2R hoặc -0.1R" : "vd: 2R hoặc 98"}
+            value={form.pnl}
+            onChange={e => set("pnl", e.target.value)}
+            style={inp}
+          />
         </div>
       </div>
       <div>
