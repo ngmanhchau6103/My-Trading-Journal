@@ -26,6 +26,12 @@ const TEXT = {
     stats: "Thống kê",
     settings: "Thiết lập",
     madeBy: "Made by Chau Nguyen",
+    loginValue: "Journal less. Review better. Trade with more discipline.",
+    loginValue: "Journal less. Review better. Trade with more discipline.",
+    newTradeValue: "Mỗi lệnh nên trả lời một câu hỏi: bạn có đi đúng kế hoạch không?",
+    historyValue: "Lịch sử giao dịch không chỉ là danh sách các lệnh. Nó là tấm gương phản chiếu thói quen của bạn.",
+    statsValue: "Những thống kê đơn giản giúp bạn hiểu kỷ luật giao dịch của mình, thay vì bị ngợp bởi các con số.",
+    settingsValue: "Xác định quy tắc giao dịch trước khi thị trường thử thách kỷ luật của bạn.",
 
     chooseDirection: "Chọn hướng giao dịch",
     chooseSetup: "Chọn setup / chiến lược",
@@ -213,6 +219,10 @@ const TEXT = {
     stats: "Statistics",
     settings: "Settings",
     madeBy: "Made by Chau Nguyen",
+    newTradeValue: "Every trade should answer one question: did you follow your plan?",
+    historyValue: "Your trade history is not just a list of trades. It is a mirror of your habits.",
+    statsValue: "Simple stats that help you understand your discipline, not drown in numbers.",
+    settingsValue: "Define your trading rules before the market tests your discipline.",
 
     chooseDirection: "Choose trade direction",
     chooseSetup: "Choose setup / strategy",
@@ -654,6 +664,30 @@ const lbl = {
   marginBottom: 5,
   fontWeight: 500,
 };
+
+const PageValueText = ({ children }) => (
+  <div
+    style={{
+      background: "#fff",
+      border: "0.5px solid #e5e5e5",
+      borderRadius: 14,
+      padding: "14px 16px",
+      marginBottom: 18,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+    }}
+  >
+    <div
+      style={{
+        fontSize: 14,
+        color: "#555",
+        lineHeight: 1.6,
+        fontWeight: 500,
+      }}
+    >
+      {children}
+    </div>
+  </div>
+);
 
 const SecTitle = ({ txt }) => (
   <div
@@ -4583,6 +4617,18 @@ function AuthScreen() {
           My Trading Journal
         </h1>
 
+        <div
+          style={{
+            fontSize: 15,
+            color: "#111",
+            lineHeight: 1.5,
+            fontWeight: 600,
+            marginBottom: 10,
+          }}
+        >
+          Journal less. Review better. Trade with more discipline.
+        </div>
+
         <p style={{ fontSize: 14, color: "#888", lineHeight: 1.6, marginBottom: 22 }}>
           Sign in with Google to save your trades, setups, and statistics across devices.
         </p>
@@ -4956,57 +5002,73 @@ export default function App() {
         </div>
 
         {tab === "new" && (
-          <NewTradeFlow
-            initial={editTrade}
-            onSave={saveTrade}
-            onCancel={() => {
-              setEditTrade(null);
-              setTab("history");
-            }}
-            setups={setups}
-            sessions={sessions}
-            pnlMode={pnlMode}
-            draftKey={`${TRADE_DRAFT_KEY}_${user.id}`}
-            t={t}
-          />
+          <>
+            <PageValueText>{t("newTradeValue")}</PageValueText>
+
+            <NewTradeFlow
+              initial={editTrade}
+              onSave={saveTrade}
+              onCancel={() => {
+                setEditTrade(null);
+                setTab("history");
+              }}
+              setups={setups}
+              sessions={sessions}
+              pnlMode={pnlMode}
+              draftKey={`${TRADE_DRAFT_KEY}_${user.id}`}
+              t={t}
+            />
+          </>
         )}
 
         {tab === "history" && (
-          <HistoryTab
-            trades={trades}
-            setups={setups}
-            sessions={sessions}
-            onDelete={deleteTrade}
-            onEdit={startEdit}
-            t={t}
-          />
+          <>
+            <PageValueText>{t("historyValue")}</PageValueText>
+
+            <HistoryTab
+              trades={trades}
+              setups={setups}
+              sessions={sessions}
+              onDelete={deleteTrade}
+              onEdit={startEdit}
+              t={t}
+            />
+          </>
         )}
 
         {tab === "stats" && (
-          <StatsTab
-            trades={trades}
-            setups={setups}
-            sessions={sessions}
-            onSelectDay={(dateStr, dayTrades) =>
-              setDayModal({ dateStr, dayTrades })
-            }
-            lang={language}
-            t={t}
-          />
+          <>
+            <PageValueText>{t("statsValue")}</PageValueText>
+
+            <StatsTab
+              trades={trades}
+              setups={setups}
+              sessions={sessions}
+              onSelectDay={(dateStr, dayTrades) =>
+                setDayModal({ dateStr, dayTrades })
+              }
+              lang={language}
+              t={t}
+            />
+          </>
         )}
 
         {tab === "thietlap" && (
-          <ThietLapTab
-            setups={setups}
-            onSetupsSave={setSetups}
-            sessions={sessions}
-            onSessionsSave={setSessions}
-            pnlMode={pnlMode}
-            onPnlModeSave={setPnlMode}
-            language={language}
-            onLanguageSave={setLanguage}
-            t={t}
-          />
+          <>
+            <PageValueText>{t("settingsValue")}</PageValueText>
+
+            <ThietLapTab
+              setups={setups}
+              onSetupsSave={setSetups}
+              sessions={sessions}
+              onSessionsSave={setSessions}
+              pnlMode={pnlMode}
+              onPnlModeSave={setPnlMode}
+              language={language}
+              onLanguageSave={setLanguage}
+              t={t}
+            />
+          </>
         )}
 
         <div
