@@ -11,6 +11,7 @@ const SESSIONS_KEY = "my_journal_sessions";
 const PNL_MODE_KEY = "my_journal_pnl_mode";
 const LANGUAGE_KEY = "my_journal_language";
 const JOURNAL_TABLE = "journal_data";
+const TRADE_DRAFT_KEY = "my_journal_trade_draft";
 const DEFAULT_LANGUAGE = "en";
 
 const LANGUAGES = [
@@ -85,6 +86,7 @@ const TEXT = {
     lessonPlaceholder: "vd: Không trade revenge, chờ confirmation...",
     chartImages: "Hình ảnh chart (không giới hạn)",
     addImage: "+ Thêm ảnh",
+    pasteImageHint: "Dán ảnh vào đây",
     saveTrade: "Lưu lệnh",
 
     searchPlaceholder: "🔍  Tìm ticker, bài học, session...",
@@ -271,6 +273,7 @@ const TEXT = {
     lessonPlaceholder: "e.g. No revenge trades, wait for confirmation...",
     chartImages: "Chart images (unlimited)",
     addImage: "+ Add image",
+    pasteImageHint: "Paste image here",
     saveTrade: "Save trade",
 
     searchPlaceholder: "🔍  Search ticker, lesson, session...",
@@ -452,6 +455,14 @@ const persist = (key, val) => {
 
   try {
     window.localStorage.setItem(key, JSON.stringify(val));
+  } catch {}
+};
+
+const removePersist = key => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(key);
   } catch {}
 };
 
@@ -695,88 +706,160 @@ function Badge({ label, color = "gray" }) {
 function ImageUpload({ images, onChange, t }) {
   const ref = useRef();
 
-  const handleFiles = e => {
-    Array.from(e.target.files).forEach(f => {
+  const addFiles = files => {
+    Array.from(files).forEach(f => {
+      if (!f.type?.startsWith("image/")) return;
+
       const reader = new FileReader();
+
       reader.onload = ev =>
-        onChange(prev => [...prev, { name: f.name, url: ev.target.result }]);
+        onChange(prev => [
+          ...prev,
+          {
+            name: f.name || `pasted-chart-${Date.now()}.png`,
+            url: ev.target.result,
+          },
+        ]);
+
       reader.readAsDataURL(f);
     });
+  };
 
+  const handleFiles = e => {
+    addFiles(e.target.files);
     e.target.value = "";
+  };
+
+  const handlePaste = e => {
+    const clipboardItems = e.clipboardData?.items;
+    const clipboardFiles = e.clipboardData?.files;
+
+    if (clipboardFiles?.length) {
+      const imageFiles = Array.from(clipboardFiles).filter(file =>
+        file.type?.startsWith("image/")
+      );
+
+      if (imageFiles.length) {
+        e.preventDefault();
+        addFiles(imageFiles);
+        return;
+      }
+    }
+
+    if (clipboardItems?.length) {
+      const files = [];
+
+      Array.from(clipboardItems).forEach(item => {
+        if (item.type?.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      });
+
+      if (files.length) {
+        e.preventDefault();
+        addFiles(files);
+      }
+    }
   };
 
   return (
     <div>
       <div
+        tabIndex={0}
+        onPaste={handlePaste}
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: 10,
-          marginBottom: images.length ? 10 : 0,
+          border: "1px dashed #d8d8d8",
+          borderRadius: 10,
+          padding: 12,
+          background: "#fff",
+          outline: "none",
         }}
       >
-        {images.map((img, i) => (
-          <div
-            key={i}
-            style={{
-              position: "relative",
-              borderRadius: 8,
-              overflow: "hidden",
-              border: "0.5px solid #ddd",
-              background: "#000",
-            }}
-          >
-            <img
-              src={img.url}
-              alt={img.name}
-              style={{
-                width: "100%",
-                aspectRatio: "16/9",
-                objectFit: "contain",
-                display: "block",
-              }}
-            />
+        <div
+          style={{
+            fontSize: 12,
+            color: "#aaa",
+            textAlign: "center",
+            marginBottom: images.length ? 10 : 0,
+            lineHeight: 1.5,
+          }}
+        >
+          {t("pasteImageHint")}
+        </div>
 
-            <button
-              onClick={() => onChange(prev => prev.filter((_, j) => j !== i))}
-              style={{
-                position: "absolute",
-                top: 6,
-                right: 6,
-                background: "rgba(0,0,0,0.55)",
-                color: "#fff",
-                border: "none",
-                borderRadius: "50%",
-                width: 22,
-                height: 22,
-                cursor: "pointer",
-                fontSize: 12,
-              }}
-            >
-              ✕
-            </button>
-
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+            gap: 10,
+            marginBottom: images.length ? 10 : 0,
+          }}
+        >
+          {images.map((img, i) => (
             <div
+              key={i}
               style={{
-                padding: "4px 8px",
-                fontSize: 11,
-                color: "#888",
-                background: "#f8f8f8",
-                whiteSpace: "nowrap",
+                position: "relative",
+                borderRadius: 8,
                 overflow: "hidden",
-                textOverflow: "ellipsis",
+                border: "0.5px solid #ddd",
+                background: "#000",
               }}
             >
-              {img.name}
-            </div>
-          </div>
-        ))}
-      </div>
+              <img
+                src={img.url}
+                alt={img.name}
+                style={{
+                  width: "100%",
+                  aspectRatio: "16/9",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
 
-      <button onClick={() => ref.current.click()} style={btnStyle}>
-        {t("addImage")}
-      </button>
+              <button
+                onClick={() => onChange(prev => prev.filter((_, j) => j !== i))}
+                style={{
+                  position: "absolute",
+                  top: 6,
+                  right: 6,
+                  background: "rgba(0,0,0,0.55)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: 22,
+                  height: 22,
+                  cursor: "pointer",
+                  fontSize: 12,
+                }}
+              >
+                ✕
+              </button>
+
+              <div
+                style={{
+                  padding: "4px 8px",
+                  fontSize: 11,
+                  color: "#888",
+                  background: "#f8f8f8",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {img.name}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ textAlign: "center" }}>
+          <button onClick={() => ref.current.click()} style={btnStyle}>
+            {t("addImage")}
+          </button>
+        </div>
+      </div>
 
       <input
         ref={ref}
@@ -1117,15 +1200,53 @@ function NewTradeFlow({
   setups,
   sessions,
   pnlMode,
+  draftKey,
   t,
 }) {
   const isEditing = !!initial;
-  const [flowStep, setFlowStep] = useState(isEditing ? "form" : "pick");
+  const draft = !isEditing && draftKey ? load(draftKey, null) : null;
+
+  const [flowStep, setFlowStep] = useState(() =>
+    isEditing ? "form" : draft?.flowStep || "pick"
+  );
+
   const [form, setForm] = useState(() =>
-    initial ? { ...emptyForm(), ...initial } : emptyForm()
+    initial
+      ? { ...emptyForm(), ...initial }
+      : draft?.form
+        ? { ...emptyForm(), ...draft.form }
+        : emptyForm()
   );
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (isEditing || !draftKey) return;
+
+    persist(draftKey, {
+      flowStep,
+      form,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [isEditing, draftKey, flowStep, form]);
+
+  const clearDraft = () => {
+    if (!draftKey) return;
+    removePersist(draftKey);
+  };
+
+  const handleSave = () => {
+    const saved = onSave(form);
+
+    if (saved !== false) {
+      clearDraft();
+    }
+  };
+
+  const handleCancel = () => {
+    clearDraft();
+    onCancel?.();
+  };
 
   const toggleArr = (k, v) => {
     const a = form[k] || [];
@@ -1342,7 +1463,7 @@ function NewTradeFlow({
 
         <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
           {onCancel && (
-            <button onClick={onCancel} style={{ ...btnStyle, color: "#aaa" }}>
+            <button onClick={handleCancel} style={{ ...btnStyle, color: "#aaa" }}>
               {t("cancel")}
             </button>
           )}
@@ -1796,12 +1917,12 @@ function NewTradeFlow({
         }}
       >
         {onCancel && (
-          <button onClick={onCancel} style={btnStyle}>
+          <button onClick={handleCancel} style={btnStyle}>
             {t("cancel")}
           </button>
         )}
 
-        <button onClick={() => onSave(form)} style={primaryBtn}>
+        <button onClick={handleSave} style={primaryBtn}>
           {t("saveTrade")}
         </button>
       </div>
@@ -4662,13 +4783,13 @@ export default function App() {
       if (error) {
         console.error("Save journal failed:", error);
       }
-    }, 600);
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [user, cloudLoaded, buildJournalPayload]);
 
   const saveTrade = form => {
-    if (!validatePnl(form.result, form.pnl, t)) return;
+    if (!validatePnl(form.result, form.pnl, t)) return false;
 
     const cleanForm = {
       ...form,
@@ -4683,6 +4804,8 @@ export default function App() {
 
     setEditTrade(null);
     setTab("history");
+
+    return true;
   };
 
   const deleteTrade = id => {
@@ -4843,6 +4966,7 @@ export default function App() {
             setups={setups}
             sessions={sessions}
             pnlMode={pnlMode}
+            draftKey={`${TRADE_DRAFT_KEY}_${user.id}`}
             t={t}
           />
         )}
