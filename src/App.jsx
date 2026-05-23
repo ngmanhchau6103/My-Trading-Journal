@@ -5231,15 +5231,39 @@ export default function App() {
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+    const authTimeout = setTimeout(() => {
       if (!mounted) return;
 
-      setUser(session?.user || null);
+      console.warn("Auth check timeout. Continue without blocking app.");
       setAuthLoading(false);
+    }, 2500);
+
+    const initAuth = async () => {
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (error) {
+          console.warn("Get session failed:", error);
+          setUser(null);
+        } else {
+          setUser(session?.user || null);
+        }
+      } catch (err) {
+        if (!mounted) return;
+
+        console.warn("Get session crashed:", err);
+        setUser(null);
+      } finally {
+        if (!mounted) return;
+
+        clearTimeout(authTimeout);
+        setAuthLoading(false);
+      }
     };
 
     initAuth();
@@ -5253,9 +5277,6 @@ export default function App() {
         const prevId = prevUser?.id || null;
         const nextId = nextUser?.id || null;
 
-        // Nếu vẫn là cùng 1 user thì không set lại user object.
-        // Việc này giúp tránh trigger load cloud lại khi browser tab focus lại
-        // hoặc Supabase refresh session.
         if (prevId === nextId) return prevUser;
 
         return nextUser;
@@ -5264,6 +5285,7 @@ export default function App() {
       if (!nextUser) {
         loadedUserIdRef.current = null;
         setCloudLoaded(false);
+        setCloudLoadTimedOut(false);
       }
 
       setAuthLoading(false);
@@ -5271,6 +5293,7 @@ export default function App() {
 
     return () => {
       mounted = false;
+      clearTimeout(authTimeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -5323,10 +5346,9 @@ export default function App() {
 
       if (error) {
         clearTimeout(timeoutId);
-        console.error("Load journal failed:", error);
-        alert("Không thể tải dữ liệu journal từ Supabase: " + error.message);
+        console.warn("Load journal failed. Continue with local data:", error);
 
-        // Không block user mãi ở màn hình Loading nếu Supabase lỗi.
+        setCloudLoadTimedOut(true);
         loadedUserIdRef.current = user.id;
         setCloudLoaded(true);
         return;
