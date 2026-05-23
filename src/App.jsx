@@ -960,6 +960,96 @@ async function exportCard(tradeId, format = "png", t = key => tOf("vi", key)) {
     alert(t("exportFailed") + err.message);
   }
 }
+
+function ImageLightbox({ image, onClose }) {
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  if (!image) return null;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 3000,
+        background: "rgba(0,0,0,0.82)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 18,
+      }}
+    >
+      <button
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          top: 18,
+          right: 18,
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          border: "none",
+          background: "rgba(255,255,255,0.16)",
+          color: "#fff",
+          fontSize: 20,
+          cursor: "pointer",
+          zIndex: 3001,
+        }}
+      >
+        ×
+      </button>
+
+      <img
+        src={image.url}
+        alt={image.name || "Chart image"}
+        onClick={e => e.stopPropagation()}
+        style={{
+          maxWidth: "96vw",
+          maxHeight: "88vh",
+          objectFit: "contain",
+          borderRadius: 10,
+          background: "#000",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+        }}
+      />
+
+      {image.name && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: "fixed",
+            bottom: 18,
+            left: "50%",
+            transform: "translateX(-50%)",
+            maxWidth: "90vw",
+            color: "#fff",
+            fontSize: 12,
+            background: "rgba(0,0,0,0.45)",
+            padding: "6px 12px",
+            borderRadius: 999,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {image.name}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Export Card ──────────────────────────────────────────────────────────────
 function ExportCard({ trade, setups, t }) {
   const pos = trade.position;
@@ -1967,6 +2057,7 @@ function NewTradeFlow({
 function TradeCard({ trade, onDelete, onEdit, setups, t }) {
   const [expanded, setExpanded] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [zoomImage, setZoomImage] = useState(null);
 
   const resColor =
     trade.result === "Win" ? "win" : trade.result === "Loss" ? "loss" : "be";
@@ -1983,6 +2074,10 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
 
   return (
     <>
+      {zoomImage && (
+        <ImageLightbox image={zoomImage} onClose={() => setZoomImage(null)} />
+      )}
+
       {expanded && <ExportCard trade={trade} setups={setups} t={t} />}
 
       <div
@@ -2223,11 +2318,15 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
                 {trade.images.map((img, i) => (
                   <div
                     key={i}
+                    onClick={() => setZoomImage(img)}
+                    title="Click to zoom"
                     style={{
                       borderRadius: 6,
                       overflow: "hidden",
                       border: "0.5px solid #ddd",
                       background: "#000",
+                      cursor: "zoom-in",
+                      position: "relative",
                     }}
                   >
                     <img
@@ -2240,6 +2339,22 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
                         display: "block",
                       }}
                     />
+
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: 6,
+                        bottom: 6,
+                        background: "rgba(0,0,0,0.55)",
+                        color: "#fff",
+                        fontSize: 11,
+                        padding: "3px 7px",
+                        borderRadius: 999,
+                        pointerEvents: "none",
+                      }}
+                    >
+                      Zoom
+                    </div>
                   </div>
                 ))}
               </div>
@@ -4675,6 +4790,8 @@ export default function App() {
   const [editTrade, setEditTrade] = useState(null);
   const [dayModal, setDayModal] = useState(null);
 
+  const loadedUserIdRef = useRef(null);
+
   const t = useCallback(key => tOf(language, key), [language]);
   const buildJournalPayload = useCallback(() => {
     return {
@@ -4694,10 +4811,10 @@ export default function App() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (mounted) {
-        setUser(session?.user || null);
-        setAuthLoading(false);
-      }
+      if (!mounted) return;
+
+      setUser(session?.user || null);
+      setAuthLoading(false);
     };
 
     initAuth();
@@ -4705,7 +4822,25 @@ export default function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+      const nextUser = session?.user || null;
+
+      setUser(prevUser => {
+        const prevId = prevUser?.id || null;
+        const nextId = nextUser?.id || null;
+
+        // Nếu vẫn là cùng 1 user thì không set lại user object.
+        // Việc này giúp tránh trigger load cloud lại khi browser tab focus lại
+        // hoặc Supabase refresh session.
+        if (prevId === nextId) return prevUser;
+
+        return nextUser;
+      });
+
+      if (!nextUser) {
+        loadedUserIdRef.current = null;
+        setCloudLoaded(false);
+      }
+
       setAuthLoading(false);
     });
 
@@ -4717,7 +4852,15 @@ export default function App() {
 
   useEffect(() => {
     if (!user) {
+      loadedUserIdRef.current = null;
       setCloudLoaded(false);
+      return;
+    }
+
+    // Nếu user này đã load cloud rồi thì không load lại nữa.
+    // Đây là phần giúp đổi tab browser rồi quay lại không bị Loading...
+    if (loadedUserIdRef.current === user.id) {
+      setCloudLoaded(true);
       return;
     }
 
@@ -4745,6 +4888,9 @@ export default function App() {
       if (error) {
         console.error("Load journal failed:", error);
         alert("Không thể tải dữ liệu journal từ Supabase: " + error.message);
+
+        // Không block user mãi ở màn hình Loading nếu Supabase lỗi.
+        loadedUserIdRef.current = user.id;
         setCloudLoaded(true);
         return;
       }
@@ -4779,6 +4925,7 @@ export default function App() {
         }
       }
 
+      loadedUserIdRef.current = user.id;
       setCloudLoaded(true);
     };
 
@@ -4787,7 +4934,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     persist(STORAGE_KEY, trades);
