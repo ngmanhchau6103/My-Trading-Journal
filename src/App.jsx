@@ -10,6 +10,7 @@ const SETUPS_KEY   = "my_journal_setups";
 const SESSIONS_KEY = "my_journal_sessions";
 const PNL_MODE_KEY = "my_journal_pnl_mode";
 const LANGUAGE_KEY = "my_journal_language";
+const PSYCHOLOGY_MODE_KEY = "my_journal_psychology_mode";
 const JOURNAL_TABLE = "journal_data";
 const TRADE_DRAFT_KEY = "my_journal_trade_draft";
 const DEFAULT_LANGUAGE = "en";
@@ -26,7 +27,6 @@ const TEXT = {
     stats: "Thống kê",
     settings: "Thiết lập",
     madeBy: "Made by Chau Nguyen",
-    loginValue: "Journal less. Review better. Trade with more discipline.",
     loginValue: "Journal less. Review better. Trade with more discipline.",
     newTradeValue: "Mỗi lệnh nên trả lời một câu hỏi: bạn có đi đúng kế hoạch không?",
     historyValue: "Lịch sử giao dịch không chỉ là danh sách các lệnh. Nó là tấm gương phản chiếu thói quen của bạn.",
@@ -69,6 +69,58 @@ const TEXT = {
 
     psychology: "Tâm lý",
     psychologyPlaceholder: "Ghi thêm nếu cần...",
+
+    mindCurve: "Mind Curve",
+    mindCurveNote: "Chọn những điều đúng với trạng thái của bạn trong từng giai đoạn. App sẽ tự tính điểm tâm lý.",
+    beforeEntry: "Trước khi vào lệnh",
+    entryMoment: "Khi vào lệnh",
+    duringTrade: "Trong lúc giữ lệnh",
+    afterExit: "Sau khi thoát lệnh",
+    mindScore: "Mind Score",
+    mindState: "Trạng thái tâm lý",
+    mindDisciplined: "Kỷ luật",
+    mindStable: "Ổn định",
+    mindNeutral: "Trung lập",
+    mindEmotional: "Cảm xúc chi phối",
+    mindOutOfControl: "Mất kiểm soát",
+    averageMindScore: "Mind Score trung bình",
+    mindByPlan: "Mind Score theo kỷ luật",
+    mindByResult: "Mind Score theo kết quả",
+    weakestMindStage: "Giai đoạn tâm lý yếu nhất",
+
+    mc_calm_plan: "Bình tĩnh theo plan",
+    mc_patient_wait: "Kiên nhẫn chờ setup",
+    mc_confident: "Tự tin vừa đủ",
+    mc_hesitant: "Hơi do dự",
+    mc_fomo: "FOMO",
+    mc_revenge: "Revenge trade",
+    mc_overconfident: "Overconfident",
+    mc_tired: "Mệt, mất tập trung",
+
+    mc_valid_setup: "Vào đúng setup",
+    mc_checklist_ok: "Đúng checklist",
+    mc_early_entry: "Vào hơi sớm",
+    mc_late_entry: "Vào trễ vì do dự",
+    mc_no_confirmation: "Thiếu confirmation",
+    mc_emotional_size: "Tăng lot vì cảm xúc",
+    mc_fear_missing_out: "Vào vì sợ bỏ lỡ",
+
+    mc_held_plan: "Giữ lệnh đúng plan",
+    mc_accepted_risk: "Chấp nhận rủi ro",
+    mc_no_interference: "Không can thiệp linh tinh",
+    mc_checked_pl: "Nhìn P/L quá nhiều",
+    mc_moved_sl_fear: "Dời SL vì sợ",
+    mc_early_exit_fear: "Chốt non vì sợ",
+    mc_impulsive_add: "Nhồi lệnh bốc đồng",
+    mc_held_loss: "Gồng lỗ sai plan",
+
+    mc_exit_plan: "Thoát đúng plan",
+    mc_accepted_result: "Chấp nhận kết quả",
+    mc_clear_lesson: "Rút ra bài học rõ ràng",
+    mc_regret_exit: "Tiếc nuối vì chốt non",
+    mc_angry_loss: "Tức giận sau lệnh thua",
+    mc_want_revenge: "Muốn vào lại để gỡ",
+    mc_overconfident_win: "Tự tin quá mức sau lệnh thắng",
 
     disciplineReview: "Đánh giá kỷ luật",
     followedPlan: "Có theo đúng plan không?",
@@ -198,6 +250,15 @@ const TEXT = {
     weeklyInsightMistake: "Lỗi lặp lại nhiều nhất tuần này là",
     weeklyInsightNoData: "Hãy ghi thêm Followed Plan và Mistake Tags để Weekly Review có insight tốt hơn.",
 
+    psychologyTracking: "Theo dõi tâm lý",
+    psychologyTrackingNote: "Chọn cách bạn muốn ghi nhận tâm lý trong mỗi lệnh.",
+    psychologyOff: "Tắt",
+    psychologyBasic: "Cơ bản",
+    psychologyAdvanced: "Nâng cao",
+    psychologyOffNote: "Không hiển thị phần tâm lý khi thêm lệnh.",
+    psychologyBasicNote: "Ghi nhanh cảm xúc tổng quan bằng tag và ghi chú.",
+    psychologyAdvancedNote: "Dùng Mind Curve để theo dõi tâm lý theo từng giai đoạn.",
+
     disciplineIssues: "Vấn đề kỷ luật",
     cleanTrades: "Clean trades",
     cleanTradeWR: "WR clean trades",
@@ -207,6 +268,9 @@ const TEXT = {
     luckyWins: "Lucky wins",
     badLosses: "Bad losses",
     tradeQuality: "Chất lượng lệnh",
+
+    weeklyMindScore: "Tâm lý tuần này",
+    reviewNotes: "Review notes",
 
     advancedStats: "Thống kê chi tiết",
     showAdvancedStats: "Hiện thống kê chi tiết",
@@ -260,6 +324,67 @@ const TEXT = {
 
     psychology: "Psychology",
     psychologyPlaceholder: "Add more notes if needed...",
+
+    mindCurve: "Mind Curve",
+    mindCurveNote: "Choose what matched your mental state at each stage. The app will calculate your psychology score automatically.",
+    beforeEntry: "Before entry",
+    entryMoment: "Entry moment",
+    duringTrade: "During trade",
+    afterExit: "After exit",
+    mindScore: "Mind Score",
+    mindState: "Mental state",
+    mindDisciplined: "Disciplined",
+    mindStable: "Stable",
+    mindNeutral: "Neutral",
+    mindEmotional: "Emotional",
+    mindOutOfControl: "Out of control",
+    averageMindScore: "Average Mind Score",
+    mindByPlan: "Mind Score by discipline",
+    mindByResult: "Mind Score by result",
+    weakestMindStage: "Weakest mental stage",
+
+    psychologyTracking: "Psychology tracking",
+    psychologyTrackingNote: "Choose how you want to track psychology for each trade.",
+    psychologyOff: "Off",
+    psychologyBasic: "Basic",
+    psychologyAdvanced: "Advanced",
+    psychologyOffNote: "Hide the psychology section when adding trades.",
+    psychologyBasicNote: "Quickly record overall emotions with tags and notes.",
+    psychologyAdvancedNote: "Use Mind Curve to track psychology by trade stage.",
+
+    mc_calm_plan: "Calm and followed plan",
+    mc_patient_wait: "Patiently waited for setup",
+    mc_confident: "Confident enough",
+    mc_hesitant: "Slightly hesitant",
+    mc_fomo: "FOMO",
+    mc_revenge: "Revenge trade",
+    mc_overconfident: "Overconfident",
+    mc_tired: "Tired or distracted",
+
+    mc_valid_setup: "Entered valid setup",
+    mc_checklist_ok: "Checklist confirmed",
+    mc_early_entry: "Entered too early",
+    mc_late_entry: "Late entry due to hesitation",
+    mc_no_confirmation: "Entered without confirmation",
+    mc_emotional_size: "Increased size emotionally",
+    mc_fear_missing_out: "Entered because of fear of missing out",
+
+    mc_held_plan: "Held according to plan",
+    mc_accepted_risk: "Accepted the risk",
+    mc_no_interference: "Did not interfere",
+    mc_checked_pl: "Checked P/L too much",
+    mc_moved_sl_fear: "Moved SL emotionally",
+    mc_early_exit_fear: "Closed early because of fear",
+    mc_impulsive_add: "Added position impulsively",
+    mc_held_loss: "Held loss against plan",
+
+    mc_exit_plan: "Exited according to plan",
+    mc_accepted_result: "Accepted the result",
+    mc_clear_lesson: "Clear lesson learned",
+    mc_regret_exit: "Regretted early exit",
+    mc_angry_loss: "Angry after loss",
+    mc_want_revenge: "Wanted to revenge trade",
+    mc_overconfident_win: "Overconfident after win",
 
     disciplineReview: "Discipline review",
     followedPlan: "Did you follow your plan?",
@@ -398,6 +523,9 @@ const TEXT = {
     badLosses: "Bad losses",
     tradeQuality: "Trade quality",
 
+    weeklyMindScore: "Weekly Mind Score",
+    reviewNotes: "Review notes",
+
     advancedStats: "Advanced stats",
     showAdvancedStats: "Show advanced stats",
     hideAdvancedStats: "Hide advanced stats",
@@ -405,6 +533,76 @@ const TEXT = {
 };
 
 const tOf = (lang, key) => TEXT[lang]?.[key] || TEXT.vi[key] || key;
+
+const MIND_TAGS = {
+  beforeEntry: [
+    { value: "calm_plan", key: "mc_calm_plan", score: 3 },
+    { value: "patient_wait", key: "mc_patient_wait", score: 3 },
+    { value: "confident", key: "mc_confident", score: 2 },
+    { value: "hesitant", key: "mc_hesitant", score: -1 },
+    { value: "fomo", key: "mc_fomo", score: -3 },
+    { value: "revenge", key: "mc_revenge", score: -5 },
+    { value: "overconfident", key: "mc_overconfident", score: -3 },
+    { value: "tired", key: "mc_tired", score: -2 },
+  ],
+  entryMoment: [
+    { value: "valid_setup", key: "mc_valid_setup", score: 3 },
+    { value: "checklist_ok", key: "mc_checklist_ok", score: 2 },
+    { value: "early_entry", key: "mc_early_entry", score: -2 },
+    { value: "late_entry", key: "mc_late_entry", score: -2 },
+    { value: "no_confirmation", key: "mc_no_confirmation", score: -3 },
+    { value: "emotional_size", key: "mc_emotional_size", score: -5 },
+    { value: "fear_missing_out", key: "mc_fear_missing_out", score: -4 },
+  ],
+  duringTrade: [
+    { value: "held_plan", key: "mc_held_plan", score: 3 },
+    { value: "accepted_risk", key: "mc_accepted_risk", score: 2 },
+    { value: "no_interference", key: "mc_no_interference", score: 2 },
+    { value: "checked_pl", key: "mc_checked_pl", score: -1 },
+    { value: "moved_sl_fear", key: "mc_moved_sl_fear", score: -4 },
+    { value: "early_exit_fear", key: "mc_early_exit_fear", score: -3 },
+    { value: "impulsive_add", key: "mc_impulsive_add", score: -5 },
+    { value: "held_loss", key: "mc_held_loss", score: -5 },
+  ],
+  afterExit: [
+    { value: "exit_plan", key: "mc_exit_plan", score: 3 },
+    { value: "accepted_result", key: "mc_accepted_result", score: 2 },
+    { value: "clear_lesson", key: "mc_clear_lesson", score: 1 },
+    { value: "regret_exit", key: "mc_regret_exit", score: -2 },
+    { value: "angry_loss", key: "mc_angry_loss", score: -3 },
+    { value: "want_revenge", key: "mc_want_revenge", score: -5 },
+    { value: "overconfident_win", key: "mc_overconfident_win", score: -3 },
+  ],
+};
+
+const clampMindScore = score => Math.max(-5, Math.min(5, score));
+
+const calculateStageScore = (selectedValues = [], tagList = []) => {
+  const total = selectedValues.reduce((sum, value) => {
+    const tag = tagList.find(item => item.value === value);
+    return sum + (tag?.score || 0);
+  }, 0);
+
+  return clampMindScore(total);
+};
+
+const calculateMindScore = scores => {
+  const valid = scores.filter(score => typeof score === "number");
+
+  if (!valid.length) return null;
+
+  const total = valid.reduce((sum, score) => sum + score, 0);
+  return Number((total / valid.length).toFixed(1));
+};
+
+const getMindStateKey = score => {
+  if (score === null || score === undefined) return "mindNeutral";
+  if (score >= 3) return "mindDisciplined";
+  if (score >= 1) return "mindStable";
+  if (score > -1) return "mindNeutral";
+  if (score > -3) return "mindEmotional";
+  return "mindOutOfControl";
+};
 
 const PSYCHOLOGY_OPTIONS = [
   { value: "Tự tin, kiên nhẫn", key: "p_confident" },
@@ -485,8 +683,20 @@ const emptyForm = () => ({
   stepData: {},
   entryTF: "",
   session: "",
+
   psychologyTags: [],
   psychology: "",
+
+  mindBeforeEntry: [],
+  mindEntryMoment: [],
+  mindDuringTrade: [],
+  mindAfterExit: [],
+  mindBeforeEntryScore: null,
+  mindEntryMomentScore: null,
+  mindDuringTradeScore: null,
+  mindAfterExitScore: null,
+  mindScore: null,
+
   followedPlan: "",
   mistakeTags: [],
   ruleBrokenNote: "",
@@ -733,6 +943,302 @@ function Badge({ label, color = "gray" }) {
     >
       {label}
     </span>
+  );
+}
+
+function MindCurveInput({ form, toggleArr, t }) {
+  const stages = [
+    {
+      key: "mindBeforeEntry",
+      scoreKey: "mindBeforeEntryScore",
+      title: t("beforeEntry"),
+      tags: MIND_TAGS.beforeEntry,
+    },
+    {
+      key: "mindEntryMoment",
+      scoreKey: "mindEntryMomentScore",
+      title: t("entryMoment"),
+      tags: MIND_TAGS.entryMoment,
+    },
+    {
+      key: "mindDuringTrade",
+      scoreKey: "mindDuringTradeScore",
+      title: t("duringTrade"),
+      tags: MIND_TAGS.duringTrade,
+    },
+    {
+      key: "mindAfterExit",
+      scoreKey: "mindAfterExitScore",
+      title: t("afterExit"),
+      tags: MIND_TAGS.afterExit,
+    },
+  ];
+
+  const scoreColor = score => {
+    if (score >= 3) return "#3B6D11";
+    if (score >= 1) return "#185FA5";
+    if (score > -1) return "#777";
+    if (score > -3) return "#854F0B";
+    return "#A32D2D";
+  };
+
+  const stageScores = stages.map(stage => ({
+    ...stage,
+    score: calculateStageScore(form[stage.key] || [], stage.tags),
+  }));
+
+  const mindScore = calculateMindScore(stageScores.map(stage => stage.score));
+
+  return (
+    <div
+      style={{
+        background: "#f7f7f5",
+        border: "0.5px solid #e5e5e5",
+        borderRadius: 12,
+        padding: "12px 14px",
+        marginTop: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 10,
+          alignItems: "flex-start",
+          marginBottom: 10,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>
+            {t("mindCurve")}
+          </div>
+
+          <div style={{ fontSize: 12, color: "#999", lineHeight: 1.5, marginTop: 3 }}>
+            {t("mindCurveNote")}
+          </div>
+        </div>
+
+        <div
+          style={{
+            textAlign: "right",
+            minWidth: 90,
+            fontSize: 12,
+            color: "#999",
+          }}
+        >
+          <div>{t("mindScore")}</div>
+          <div
+            style={{
+              fontSize: 20,
+              fontWeight: 800,
+              color: scoreColor(mindScore || 0),
+            }}
+          >
+            {mindScore ?? "—"}
+          </div>
+          <div style={{ fontSize: 11, color: scoreColor(mindScore || 0) }}>
+            {t(getMindStateKey(mindScore))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {stageScores.map(stage => (
+          <div key={stage.key}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 6,
+                gap: 10,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "#777", fontWeight: 600 }}>
+                {stage.title}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: scoreColor(stage.score),
+                }}
+              >
+                {stage.score > 0 ? `+${stage.score}` : stage.score}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+              {stage.tags.map(tag => (
+                <button
+                  key={tag.value}
+                  onClick={() => toggleArr(stage.key, tag.value)}
+                  style={chipStyle((form[stage.key] || []).includes(tag.value), {
+                    bg: tag.score > 0 ? "#EAF3DE" : "#FCEBEB",
+                    text: tag.score > 0 ? "#3B6D11" : "#A32D2D",
+                    border: tag.score > 0 ? "#97C459" : "#F09595",
+                  })}
+                  title={`${tag.score > 0 ? "+" : ""}${tag.score}`}
+                >
+                  {t(tag.key)}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MiniMindCurve({ trade, t }) {
+  const scores = [
+    trade.mindBeforeEntryScore,
+    trade.mindEntryMomentScore,
+    trade.mindDuringTradeScore,
+    trade.mindAfterExitScore,
+  ].map(score => (typeof score === "number" ? score : 0));
+
+  const labels = [
+    t("beforeEntry"),
+    t("entryMoment"),
+    t("duringTrade"),
+    t("afterExit"),
+  ];
+
+  const width = 720;
+  const height = 150;
+  const paddingX = 42;
+  const topPadding = 26;
+  const bottomPadding = 48;
+
+  const chartHeight = height - topPadding - bottomPadding;
+
+  const points = scores.map((score, index) => {
+    const x = paddingX + index * ((width - paddingX * 2) / 3);
+    const normalized = (score + 5) / 10;
+    const y = topPadding + (1 - normalized) * chartHeight;
+
+    return { x, y, score, label: labels[index] };
+  });
+
+  const path = points
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+
+  const scoreColor = score => {
+    if (score >= 3) return "#3B6D11";
+    if (score >= 1) return "#185FA5";
+    if (score > -1) return "#777";
+    if (score > -3) return "#854F0B";
+    return "#A32D2D";
+  };
+
+  return (
+    <div
+      style={{
+        background: "#f7f7f5",
+        border: "0.5px solid #e5e5e5",
+        borderRadius: 10,
+        padding: "12px 14px",
+        textAlign: "left",
+      }}
+    >
+      <div style={{ marginBottom: 8 }}>
+        <div
+          style={{
+            fontSize: 11,
+            color: "#aaa",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: 0.5,
+            marginBottom: 4,
+          }}
+        >
+          {t("mindCurve")}
+        </div>
+
+        <div style={{ fontSize: 13, color: "#333", fontWeight: 600 }}>
+          {t("mindScore")}:{" "}
+          <span style={{ color: scoreColor(trade.mindScore || 0) }}>
+            {trade.mindScore > 0 ? `+${trade.mindScore}` : trade.mindScore}
+          </span>{" "}
+          · {t(getMindStateKey(trade.mindScore))}
+        </div>
+      </div>
+
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{
+          width: "100%",
+          height: 150,
+          display: "block",
+        }}
+      >
+        <line
+          x1={paddingX}
+          y1={topPadding + chartHeight / 2}
+          x2={width - paddingX}
+          y2={topPadding + chartHeight / 2}
+          stroke="#ddd"
+          strokeWidth="1"
+        />
+
+        <path
+          d={path}
+          fill="none"
+          stroke="#185FA5"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {points.map((point, index) => (
+          <g key={index}>
+            <circle
+              cx={point.x}
+              cy={point.y}
+              r="5.5"
+              fill={scoreColor(point.score)}
+              stroke="#fff"
+              strokeWidth="2"
+            />
+
+            <text
+              x={point.x}
+              y={point.y - 10}
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="700"
+              fill={scoreColor(point.score)}
+            >
+              {point.score > 0 ? `+${point.score}` : point.score}
+            </text>
+
+            <text
+              x={point.x}
+              y={height - 24}
+              textAnchor="middle"
+              fontSize="11"
+              fontWeight="700"
+              fill="#777"
+            >
+              {index + 1}
+            </text>
+
+            <text
+              x={point.x}
+              y={height - 8}
+              textAnchor="middle"
+              fontSize="10.5"
+              fill="#999"
+            >
+              {point.label}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }
 
@@ -1217,6 +1723,35 @@ function ExportCard({ trade, setups, t }) {
         </div>
       )}
 
+      {trade.mindScore !== null && trade.mindScore !== undefined && (
+        <div
+          style={{
+            background: "#f7f7f5",
+            border: "0.5px solid #e5e5e5",
+            borderRadius: 8,
+            padding: "9px 12px",
+            fontSize: 13,
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <span style={{ color: "#888", fontWeight: 500 }}>
+              {t("mindCurve")}:{" "}
+            </span>
+            <span style={{ color: "#333" }}>
+              {t(getMindStateKey(trade.mindScore))}
+            </span>
+          </div>
+
+          <div style={{ fontWeight: 800, color: "#111" }}>
+            {trade.mindScore > 0 ? `+${trade.mindScore}` : trade.mindScore}
+          </div>
+        </div>
+      )}
+
       {(trade.followedPlan || trade.mistakeTags?.length > 0 || trade.ruleBrokenNote) && (
         <div
           style={{
@@ -1324,6 +1859,7 @@ function NewTradeFlow({
   setups,
   sessions,
   pnlMode,
+  psychologyMode,
   draftKey,
   t,
 }) {
@@ -1934,33 +2470,43 @@ function NewTradeFlow({
         </div>
       </div>
 
-      <div>
-        <div style={lbl}>{t("psychology")}</div>
+      {psychologyMode !== "off" && (
+        <div>
+          <div style={lbl}>{t("psychology")}</div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 6 }}>
-          {PSYCHOLOGY_OPTIONS.map(p => (
-            <button
-              key={p.value}
-              onClick={() => toggleArr("psychologyTags", p.value)}
-              style={chipStyle((form.psychologyTags || []).includes(p.value), {
-                bg: "#EEEDFE",
-                text: "#3C3489",
-                border: "#AFA9EC",
-              })}
-            >
-              {t(p.key)}
-            </button>
-          ))}
+          {psychologyMode === "basic" && (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 6 }}>
+                {PSYCHOLOGY_OPTIONS.map(p => (
+                  <button
+                    key={p.value}
+                    onClick={() => toggleArr("psychologyTags", p.value)}
+                    style={chipStyle((form.psychologyTags || []).includes(p.value), {
+                      bg: "#EEEDFE",
+                      text: "#3C3489",
+                      border: "#AFA9EC",
+                    })}
+                  >
+                    {t(p.key)}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                placeholder={t("psychologyPlaceholder")}
+                value={form.psychology}
+                onChange={e => set("psychology", e.target.value)}
+                style={{ ...inp, fontSize: 13 }}
+              />
+            </>
+          )}
+
+          {psychologyMode === "advanced" && (
+            <MindCurveInput form={form} toggleArr={toggleArr} t={t} />
+          )}
         </div>
-
-        <input
-          type="text"
-          placeholder={t("psychologyPlaceholder")}
-          value={form.psychology}
-          onChange={e => set("psychology", e.target.value)}
-          style={{ ...inp, fontSize: 13 }}
-        />
-      </div>
+      )}
 
       <SecTitle txt={t("disciplineReview")} />
 
@@ -2154,11 +2700,13 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
         {expanded && (
           <div
             style={{
-              padding: "12px 16px",
+              padding: "14px 16px",
               borderTop: "0.5px solid #f0f0f0",
               display: "flex",
               flexDirection: "column",
-              gap: 10,
+              gap: 12,
+              textAlign: "left",
+              alignItems: "stretch",
             }}
           >
             {selectedSetups.map(setup => {
@@ -2172,8 +2720,9 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
                   key={setup.id}
                   style={{
                     background: "#f7f7f5",
-                    borderRadius: 8,
-                    padding: "10px 14px",
+                    borderRadius: 10,
+                    padding: "12px 14px",
+                    textAlign: "left",
                   }}
                 >
                   <div
@@ -2192,7 +2741,15 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {setup.steps.map((step, idx) => (
-                      <div key={idx} style={{ fontSize: 13 }}>
+                      <div
+                        key={idx}
+                        style={{
+                          fontSize: 13,
+                          lineHeight: 1.55,
+                          padding: "3px 0",
+                          textAlign: "left",
+                        }}
+                      >
                         <span style={{ color: "#aaa", fontSize: 11 }}>
                           {idx + 1}. {step.label}:{" "}
                         </span>
@@ -2214,7 +2771,16 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
             })}
 
             {trade.entryTF && (
-              <div style={{ fontSize: 13 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  background: "#fff",
+                  border: "0.5px solid #eee",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  textAlign: "left",
+                }}
+              >
                 <span style={{ color: "#888", fontWeight: 500 }}>
                   {t("entryTimeframe")}:{" "}
                 </span>
@@ -2224,7 +2790,16 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
             )}
 
             {(trade.psychologyTags?.length > 0 || trade.psychology) && (
-              <div style={{ fontSize: 13 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  background: "#f7f7f5",
+                  border: "0.5px solid #eee",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  textAlign: "left",
+                }}
+              >
                 <span style={{ color: "#888", fontWeight: 500 }}>
                   {t("psychology")}:{" "}
                 </span>
@@ -2237,6 +2812,10 @@ function TradeCard({ trade, onDelete, onEdit, setups, t }) {
                   .filter(Boolean)
                   .join(" · ")}
               </div>
+            )}
+
+            {trade.mindScore !== null && trade.mindScore !== undefined && (
+              <MiniMindCurve trade={trade} t={t} />
             )}
 
             {(trade.followedPlan || trade.mistakeTags?.length > 0 || trade.ruleBrokenNote) && (
@@ -2634,10 +3213,12 @@ function CalendarView({ trades, onSelectDay, lang, t }) {
 
   const locale = lang === "en" ? "en-US" : "vi-VN";
 
-  const monthName = new Date(viewYear, viewMonth, 1).toLocaleDateString(locale, {
+  const rawMonthName = new Date(viewYear, viewMonth, 1).toLocaleDateString(locale, {
     month: "long",
     year: "numeric",
   });
+
+  const monthName = rawMonthName.charAt(0).toUpperCase() + rawMonthName.slice(1);
 
   const DOW =
     lang === "en"
@@ -2984,22 +3565,17 @@ function WeeklyReview({ trades, setups, lang, t }) {
     ? ((followedYes / disciplineTotal) * 100).toFixed(0)
     : "—";
 
-  const followedTrades = weekTrades.filter(trade => trade.followedPlan === "Yes");
-  const notFollowedTrades = weekTrades.filter(trade => trade.followedPlan === "No");
+  const mindScores = weekTrades
+    .map(trade => trade.mindScore)
+    .filter(score => typeof score === "number");
 
-  const followedWR = calcWR(followedTrades);
-  const notFollowedWR = calcWR(notFollowedTrades);
-
-  const cleanTrades = weekTrades.filter(isCleanTrade);
-  const issueTrades = weekTrades.filter(hasDisciplineIssue);
-
-  const cleanWR = calcWR(cleanTrades);
-  const issueWR = calcWR(issueTrades);
-
-  const aPlusTrades = weekTrades.filter(trade => tradeQuality(trade) === "A+").length;
-  const goodLosses = weekTrades.filter(trade => tradeQuality(trade) === "Good Loss").length;
-  const luckyWins = weekTrades.filter(trade => tradeQuality(trade) === "Lucky Win").length;
-  const badLosses = weekTrades.filter(trade => tradeQuality(trade) === "Bad Loss").length;
+  const weeklyMindScore = mindScores.length
+    ? Number(
+        (
+          mindScores.reduce((sum, score) => sum + score, 0) / mindScores.length
+        ).toFixed(1)
+      )
+    : null;
 
   const mistakeStats = MISTAKE_OPTIONS.map(m => ({
     value: m.value,
@@ -3012,28 +3588,6 @@ function WeeklyReview({ trades, setups, lang, t }) {
     .sort((a, b) => b.count - a.count);
 
   const topMistake = mistakeStats[0];
-
-  const setupStats = setups
-    .map(setup => {
-      const setupTrades = weekTrades.filter(trade =>
-        (trade.selectedSetupIds || []).includes(setup.id)
-      );
-
-      return {
-        id: setup.id,
-        name: setup.name,
-        count: setupTrades.length,
-        wr: calcWR(setupTrades),
-        wins: setupTrades.filter(trade => trade.result === "Win").length,
-      };
-    })
-    .filter(setup => setup.count > 0)
-    .sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      return b.wins - a.wins;
-    });
-
-  const mostUsedSetup = setupStats[0];
 
   const ruleNotes = weekTrades
     .filter(trade => trade.ruleBrokenNote)
@@ -3082,6 +3636,20 @@ function WeeklyReview({ trades, setups, lang, t }) {
     year: "numeric",
   })}`;
 
+  const mindStateLabel =
+    weeklyMindScore === null
+      ? t("noData")
+      : t(getMindStateKey(weeklyMindScore));
+
+  const mindColor = (() => {
+    if (weeklyMindScore === null) return "#999";
+    if (weeklyMindScore >= 3) return "#3B6D11";
+    if (weeklyMindScore >= 1) return "#185FA5";
+    if (weeklyMindScore > -1) return "#777";
+    if (weeklyMindScore > -3) return "#854F0B";
+    return "#A32D2D";
+  })();
+
   const MiniCard = ({ label, value, sub, color }) => (
     <div
       style={{
@@ -3110,6 +3678,79 @@ function WeeklyReview({ trades, setups, lang, t }) {
       {sub && (
         <div style={{ fontSize: 12, color: "#999", marginTop: 3 }}>
           {sub}
+        </div>
+      )}
+    </div>
+  );
+
+  const NoteList = ({ title, emptyText, items, type }) => (
+    <div>
+      <div
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#888",
+          textTransform: "uppercase",
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+
+      {items.length === 0 ? (
+        <div
+          style={{
+            background: "#f7f7f5",
+            borderRadius: 10,
+            padding: "14px",
+            fontSize: 13,
+            color: "#bbb",
+          }}
+        >
+          {emptyText}
+        </div>
+      ) : (
+        <div
+          style={{
+            background: type === "rule" ? "#FCEBEB" : type === "mistake" ? "#fffaf5" : "#f7f7f5",
+            border:
+              type === "rule"
+                ? "0.5px solid #F09595"
+                : type === "mistake"
+                  ? "0.5px solid #f0d8bd"
+                  : "0.5px solid #e5e5e5",
+            borderRadius: 10,
+            padding: "10px 14px",
+            fontSize: 13,
+          }}
+        >
+          {items.slice(0, 5).map(item => (
+            <div
+              key={item.id || item.value}
+              style={{
+                padding: "7px 0",
+                borderBottom: "0.5px solid rgba(0,0,0,0.06)",
+              }}
+            >
+              {type === "mistake" ? (
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <span>{item.label}</span>
+                  <span style={{ color: "#8A4B12", fontWeight: 700 }}>
+                    {item.count}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ color: "#aaa", fontSize: 11, marginBottom: 2 }}>
+                    {item.date} · {item.ticker || "—"}
+                  </div>
+                  <div style={{ color: "#333", lineHeight: 1.5 }}>
+                    {type === "rule" ? item.note : item.lesson}
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -3214,47 +3855,16 @@ function WeeklyReview({ trades, setups, lang, t }) {
             />
 
             <MiniCard
-              label={t("mostRepeatedMistake")}
-              value={topMistake ? topMistake.count : "—"}
-              sub={topMistake ? topMistake.label : t("noMistakeData")}
-              color={topMistake ? "#8A4B12" : "#999"}
-            />
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 10,
-              marginBottom: 16,
-            }}
-          >
-            <MiniCard
-              label={t("cleanTrades")}
-              value={cleanTrades.length}
-              sub={`${t("cleanTradeWR")}: ${cleanWR}%`}
-              color="#3B6D11"
-            />
-
-            <MiniCard
-              label={t("disciplineIssues")}
-              value={issueTrades.length}
-              sub={`${t("issueTradeWR")}: ${issueWR}%`}
-              color="#A32D2D"
-            />
-
-            <MiniCard
-              label={t("luckyWins")}
-              value={luckyWins}
-              sub={t("tradeQuality")}
-              color="#854F0B"
-            />
-
-            <MiniCard
-              label={t("badLosses")}
-              value={badLosses}
-              sub={t("tradeQuality")}
-              color="#A32D2D"
+              label={t("weeklyMindScore")}
+              value={
+                weeklyMindScore === null
+                  ? "—"
+                  : weeklyMindScore > 0
+                    ? `+${weeklyMindScore}`
+                    : weeklyMindScore
+              }
+              sub={mindStateLabel}
+              color={mindColor}
             />
           </div>
 
@@ -3267,7 +3877,7 @@ function WeeklyReview({ trades, setups, lang, t }) {
               padding: "12px 14px",
               fontSize: 13,
               lineHeight: 1.6,
-              marginBottom: 16,
+              marginBottom: 18,
               fontWeight: 500,
             }}
           >
@@ -3276,237 +3886,45 @@ function WeeklyReview({ trades, setups, lang, t }) {
 
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 18,
-              marginBottom: 18,
+              fontSize: 12,
+              fontWeight: 800,
+              color: "#888",
+              textTransform: "uppercase",
+              marginBottom: 10,
+              letterSpacing: 0.3,
             }}
           >
-
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#888",
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                }}
-              >
-                {t("followedPlan")}
-              </div>
-
-              <div
-                style={{
-                  background: "#f7f7f5",
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                  fontSize: 13,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{t("followedYes")}</span>
-                  <span style={{ color: "#3B6D11", fontWeight: 700 }}>
-                    {followedYes} · {followedWR}% WR
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{t("followedNo")}</span>
-                  <span style={{ color: "#A32D2D", fontWeight: 700 }}>
-                    {followedNo} · {notFollowedWR}% WR
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{t("followedPartial")}</span>
-                  <span style={{ color: "#854F0B", fontWeight: 700 }}>
-                    {followedPartial}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#888",
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                }}
-              >
-                {t("mostUsedSetup")}
-              </div>
-
-              <div
-                style={{
-                  background: "#f7f7f5",
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                  fontSize: 13,
-                  minHeight: 78,
-                }}
-              >
-                {mostUsedSetup ? (
-                  <>
-                    <div style={{ fontWeight: 700, color: "#111", marginBottom: 6 }}>
-                      {mostUsedSetup.name}
-                    </div>
-
-                    <div style={{ color: "#999" }}>
-                      {mostUsedSetup.count} {t("tradeUnit")} · {mostUsedSetup.wr}% WR
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ color: "#bbb" }}>{t("noData")}</div>
-                )}
-              </div>
-            </div>
+            {t("reviewNotes")}
           </div>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 18,
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 14,
             }}
           >
+            <NoteList
+              title={t("mistakes")}
+              emptyText={t("noMistakeData")}
+              items={mistakeStats}
+              type="mistake"
+            />
 
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#888",
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                }}
-              >
-                {t("mistakes")}
-              </div>
+            <NoteList
+              title={t("tradeLessons")}
+              emptyText={t("noLessonData")}
+              items={lessons}
+              type="lesson"
+            />
 
-              {mistakeStats.length === 0 ? (
-                <div style={{ fontSize: 13, color: "#bbb" }}>
-                  {t("noMistakeData")}
-                </div>
-              ) : (
-                <div
-                  style={{
-                    background: "#fffaf5",
-                    border: "0.5px solid #f0d8bd",
-                    borderRadius: 10,
-                    padding: "10px 14px",
-                    fontSize: 13,
-                  }}
-                >
-                  {mistakeStats.slice(0, 5).map(m => (
-                    <div
-                      key={m.value}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "7px 0",
-                        borderBottom: "0.5px solid #f5e3cf",
-                      }}
-                    >
-                      <span>{m.label}</span>
-                      <span style={{ color: "#8A4B12", fontWeight: 700 }}>
-                        {m.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#888",
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                }}
-              >
-                {t("tradeLessons")}
-              </div>
-
-              {lessons.length === 0 ? (
-                <div style={{ fontSize: 13, color: "#bbb" }}>
-                  {t("noLessonData")}
-                </div>
-              ) : (
-                <div
-                  style={{
-                    background: "#f7f7f5",
-                    borderRadius: 10,
-                    padding: "10px 14px",
-                    fontSize: 13,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  {lessons.slice(0, 4).map(item => (
-                    <div key={item.id}>
-                      <div style={{ color: "#aaa", fontSize: 11, marginBottom: 2 }}>
-                        {item.date} · {item.ticker || "—"}
-                      </div>
-                      <div style={{ color: "#333", lineHeight: 1.5 }}>
-                        {item.lesson}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <NoteList
+              title={t("ruleNotes")}
+              emptyText={t("noRuleNoteData")}
+              items={ruleNotes}
+              type="rule"
+            />
           </div>
-
-          {ruleNotes.length > 0 && (
-            <div style={{ marginTop: 18 }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: "#888",
-                  textTransform: "uppercase",
-                  marginBottom: 8,
-                }}
-              >
-                {t("ruleNotes")}
-              </div>
-
-              <div
-                style={{
-                  background: "#FCEBEB",
-                  border: "0.5px solid #F09595",
-                  borderRadius: 10,
-                  padding: "10px 14px",
-                  fontSize: 13,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
-                {ruleNotes.slice(0, 5).map(item => (
-                  <div key={item.id}>
-                    <div style={{ color: "#A32D2D", fontSize: 11, marginBottom: 2 }}>
-                      {item.date} · {item.ticker || "—"}
-                    </div>
-                    <div style={{ color: "#333", lineHeight: 1.5 }}>
-                      {item.note}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>
@@ -3532,306 +3950,158 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
     setToDate("");
   };
 
+  const hasDateFilter = fromDate || toDate;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div
-        style={{
-          background: "#fff",
-          border: "0.5px solid #e5e5e5",
-          borderRadius: 12,
-          padding: "14px 16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 12,
-            color: "#888",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: 0.3,
-          }}
-        >
-          {t("filterByDate")}
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr auto",
-            gap: 10,
-            alignItems: "end",
-          }}
-        >
-          <div>
-            <div style={lbl}>{t("fromDate")}</div>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={e => setFromDate(e.target.value)}
-              style={inp}
-            />
-          </div>
-
-          <div>
-            <div style={lbl}>{t("toDate")}</div>
-            <input
-              type="date"
-              value={toDate}
-              onChange={e => setToDate(e.target.value)}
-              style={inp}
-            />
-          </div>
-
-          <button onClick={clearDateFilter} style={{ ...btnStyle, height: 34 }}>
-            {t("clearFilter")}
-          </button>
-        </div>
-
-        <div style={{ fontSize: 12, color: "#aaa" }}>
-          {t("showingTrades")} {filteredTrades.length} / {trades.length}{" "}
-          {t("tradeUnit")}
-        </div>
-      </div>
-
-      <WeeklyReview trades={trades} setups={setups} lang={lang} t={t} />
-
       <CalendarView
-        trades={filteredTrades}
+        trades={trades}
         onSelectDay={onSelectDay}
         lang={lang}
         t={t}
       />
 
-      <div style={{ textAlign: "center" }}>
-        <button
-          onClick={() => setShowAdvancedStats(v => !v)}
-          style={{
-            ...btnStyle,
-            fontSize: 12,
-            color: "#666",
-            background: showAdvancedStats ? "#f1f1ee" : "#fff",
-          }}
-        >
-          {showAdvancedStats ? t("hideAdvancedStats") : t("showAdvancedStats")}
-        </button>
-      </div>
+      <WeeklyReview trades={trades} setups={setups} lang={lang} t={t} />
 
-      {showAdvancedStats && (
-        <div
-          style={{
-            background: "#fff",
-            border: "0.5px solid #e5e5e5",
-            borderRadius: 14,
-            padding: "16px 18px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              color: "#888",
-              marginBottom: 14,
-              textTransform: "uppercase",
-              letterSpacing: 0.3,
-            }}
-          >
-            {t("advancedStats")}
-          </div>
-
-          <Stats
-            trades={filteredTrades}
-            setups={setups}
-            sessions={sessions}
-            t={t}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SetupPerformance({ trades, setups, t }) {
-  const rows = setups
-    .map(setup => {
-      const setupTrades = trades.filter(trade =>
-        (trade.selectedSetupIds || []).includes(setup.id)
-      );
-
-      const withResult = setupTrades.filter(trade => trade.result);
-      const wins = withResult.filter(trade => trade.result === "Win").length;
-      const losses = withResult.filter(trade => trade.result === "Loss").length;
-      const be = withResult.filter(trade => trade.result === "BE").length;
-
-      const followedYes = setupTrades.filter(
-        trade => trade.followedPlan === "Yes"
-      ).length;
-
-      const followedNoLosses = setupTrades.filter(
-        trade => trade.followedPlan === "No" && trade.result === "Loss"
-      ).length;
-
-      const disciplineTotal = setupTrades.filter(
-        trade =>
-          trade.followedPlan === "Yes" ||
-          trade.followedPlan === "No" ||
-          trade.followedPlan === "Partially"
-      ).length;
-
-      return {
-        id: setup.id,
-        name: setup.name,
-        count: setupTrades.length,
-        wins,
-        losses,
-        be,
-        wr: withResult.length ? ((wins / withResult.length) * 100).toFixed(0) : "—",
-        planRate: disciplineTotal
-          ? ((followedYes / disciplineTotal) * 100).toFixed(0)
-          : "—",
-        followedNoLosses,
-      };
-    })
-    .filter(row => row.count > 0)
-    .sort((a, b) => b.count - a.count);
-
-  return (
-    <div>
       <div
         style={{
-          fontSize: 13,
-          fontWeight: 700,
-          color: "#888",
-          marginBottom: 10,
-          textTransform: "uppercase",
-          letterSpacing: 0.3,
+          background: "#fff",
+          border: "0.5px solid #e5e5e5",
+          borderRadius: 14,
+          padding: "16px 18px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
         }}
       >
-        {t("setupPerformance")}
-      </div>
-
-      {rows.length === 0 ? (
-        <div style={{ fontSize: 13, color: "#bbb" }}>
-          {t("noSetupPerformance")}
-        </div>
-      ) : (
         <div
           style={{
-            background: "#fff",
-            border: "0.5px solid #e5e5e5",
-            borderRadius: 12,
-            overflow: "hidden",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
           }}
         >
-          {rows.map(row => (
+          <div>
             <div
-              key={row.id}
               style={{
-                padding: "12px 14px",
-                borderBottom: "0.5px solid #f0f0f0",
+                fontSize: 13,
+                fontWeight: 800,
+                color: "#111",
+                marginBottom: 4,
+                textTransform: "uppercase",
+                letterSpacing: 0.3,
+              }}
+            >
+              {t("advancedStats")}
+            </div>
+
+            <div style={{ fontSize: 13, color: "#999", lineHeight: 1.5 }}>
+              Xem phân tích chi tiết theo khoảng thời gian bạn chọn.
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowAdvancedStats(v => !v)}
+            style={{
+              ...btnStyle,
+              fontSize: 12,
+              color: "#666",
+              background: showAdvancedStats ? "#f1f1ee" : "#fff",
+            }}
+          >
+            {showAdvancedStats ? t("hideAdvancedStats") : t("showAdvancedStats")}
+          </button>
+        </div>
+
+        {showAdvancedStats && (
+          <>
+            <div
+              style={{
+                background: "#f7f7f5",
+                border: "0.5px solid #e5e5e5",
+                borderRadius: 12,
+                padding: "14px 16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  marginBottom: 8,
-                  alignItems: "center",
+                  fontSize: 12,
+                  color: "#888",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.3,
                 }}
               >
-                <div style={{ fontWeight: 700, color: "#111", fontSize: 14 }}>
-                  {row.name}
-                </div>
-
-                <div style={{ fontSize: 12, color: "#999" }}>
-                  {row.count} {t("tradeUnit")}
-                </div>
+                {t("filterByDate")}
               </div>
 
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: 8,
-                  fontSize: 12,
+                  gridTemplateColumns: "1fr 1fr auto",
+                  gap: 10,
+                  alignItems: "end",
                 }}
               >
-                <div
-                  style={{
-                    background: "#f7f7f5",
-                    borderRadius: 8,
-                    padding: "8px 10px",
-                  }}
-                >
-                  <div style={{ color: "#aaa", marginBottom: 3 }}>{t("winRate")}</div>
-                  <div style={{ color: "#3B6D11", fontWeight: 700 }}>
-                    {row.wr}%
-                  </div>
+                <div>
+                  <div style={lbl}>{t("fromDate")}</div>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={e => setFromDate(e.target.value)}
+                    style={inp}
+                  />
                 </div>
 
-                <div
-                  style={{
-                    background: "#f7f7f5",
-                    borderRadius: 8,
-                    padding: "8px 10px",
-                  }}
-                >
-                  <div style={{ color: "#aaa", marginBottom: 3 }}>
-                    {t("winLossBE")}
-                  </div>
-                  <div style={{ color: "#111", fontWeight: 700 }}>
-                    {row.wins} / {row.losses} / {row.be}
-                  </div>
+                <div>
+                  <div style={lbl}>{t("toDate")}</div>
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={e => setToDate(e.target.value)}
+                    style={inp}
+                  />
                 </div>
 
-                <div
-                  style={{
-                    background: "#EBF4FD",
-                    borderRadius: 8,
-                    padding: "8px 10px",
-                  }}
-                >
-                  <div style={{ color: "#185FA5", marginBottom: 3 }}>
-                    {t("planRate")}
-                  </div>
-                  <div style={{ color: "#185FA5", fontWeight: 700 }}>
-                    {row.planRate}%
-                  </div>
-                </div>
+                <button onClick={clearDateFilter} style={{ ...btnStyle, height: 34 }}>
+                  {t("clearFilter")}
+                </button>
+              </div>
 
-                <div
-                  style={{
-                    background: "#FCEBEB",
-                    borderRadius: 8,
-                    padding: "8px 10px",
-                  }}
-                >
-                  <div style={{ color: "#A32D2D", marginBottom: 3 }}>
-                    {t("lossWithoutPlan")}
-                  </div>
-                  <div style={{ color: "#A32D2D", fontWeight: 700 }}>
-                    {row.followedNoLosses}
-                  </div>
-                </div>
+              <div style={{ fontSize: 12, color: "#aaa" }}>
+                {hasDateFilter
+                  ? `${t("showingTrades")} ${filteredTrades.length} / ${trades.length} ${t("tradeUnit")}`
+                  : `${t("showingTrades")} ${trades.length} ${t("tradeUnit")}`}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <Stats
+              trades={filteredTrades}
+              setups={setups}
+              sessions={sessions}
+              t={t}
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function Stats({ trades, setups, sessions, t }) {
+  const [activeView, setActiveView] = useState("discipline");
+
   const withResult = trades.filter(trade => trade.result);
   const wins = withResult.filter(trade => trade.result === "Win").length;
   const losses = withResult.filter(trade => trade.result === "Loss").length;
   const be = withResult.filter(trade => trade.result === "BE").length;
-
   const wr = withResult.length ? ((wins / withResult.length) * 100).toFixed(1) : "—";
 
   const followedYes = trades.filter(trade => trade.followedPlan === "Yes").length;
@@ -3845,21 +4115,48 @@ function Stats({ trades, setups, sessions, t }) {
     trade => trade.followedPlan === "No" && trade.result
   );
 
-  const followedWR = followedWithResult.length
-    ? (
-        (followedWithResult.filter(trade => trade.result === "Win").length /
-          followedWithResult.length) *
-        100
-      ).toFixed(0)
-    : "—";
+  const followedWR = calcWR(followedWithResult);
+  const notFollowedWR = calcWR(notFollowedWithResult);
 
-  const notFollowedWR = notFollowedWithResult.length
-    ? (
-        (notFollowedWithResult.filter(trade => trade.result === "Win").length /
-          notFollowedWithResult.length) *
-        100
-      ).toFixed(0)
-    : "—";
+  const cleanTrades = trades.filter(isCleanTrade);
+  const issueTrades = trades.filter(hasDisciplineIssue);
+
+  const cleanWR = calcWR(cleanTrades);
+  const issueWR = calcWR(issueTrades);
+
+  const luckyWins = trades.filter(trade => tradeQuality(trade) === "Lucky Win").length;
+  const badLosses = trades.filter(trade => tradeQuality(trade) === "Bad Loss").length;
+
+  const avg = arr => {
+    const nums = arr.filter(n => typeof n === "number");
+    if (!nums.length) return "—";
+    return (nums.reduce((sum, n) => sum + n, 0) / nums.length).toFixed(1);
+  };
+
+  const averageMindScore = avg(trades.map(trade => trade.mindScore));
+  const mindFollowedYes = avg(
+    trades.filter(trade => trade.followedPlan === "Yes").map(trade => trade.mindScore)
+  );
+  const mindFollowedNo = avg(
+    trades.filter(trade => trade.followedPlan === "No").map(trade => trade.mindScore)
+  );
+  const mindWin = avg(
+    trades.filter(trade => trade.result === "Win").map(trade => trade.mindScore)
+  );
+  const mindLoss = avg(
+    trades.filter(trade => trade.result === "Loss").map(trade => trade.mindScore)
+  );
+
+  const mindStageAverages = [
+    { label: t("beforeEntry"), value: avg(trades.map(trade => trade.mindBeforeEntryScore)) },
+    { label: t("entryMoment"), value: avg(trades.map(trade => trade.mindEntryMomentScore)) },
+    { label: t("duringTrade"), value: avg(trades.map(trade => trade.mindDuringTradeScore)) },
+    { label: t("afterExit"), value: avg(trades.map(trade => trade.mindAfterExitScore)) },
+  ].filter(stage => stage.value !== "—");
+
+  const weakestMindStage = mindStageAverages.length
+    ? [...mindStageAverages].sort((a, b) => Number(a.value) - Number(b.value))[0]
+    : null;
 
   const mistakeStats = MISTAKE_OPTIONS.map(m => ({
     value: m.value,
@@ -3869,274 +4166,332 @@ function Stats({ trades, setups, sessions, t }) {
     .filter(m => m.count > 0)
     .sort((a, b) => b.count - a.count);
 
-  const cleanTrades = trades.filter(isCleanTrade);
-  const issueTrades = trades.filter(hasDisciplineIssue);
+  const bySession = sessions
+    .map(session => {
+      const sessionTrades = trades.filter(trade => trade.session === session);
+      return {
+        session,
+        count: sessionTrades.length,
+        wr: calcWR(sessionTrades),
+      };
+    })
+    .filter(session => session.count > 0);
 
-  const cleanWR = calcWR(cleanTrades);
-  const issueWR = calcWR(issueTrades);
+  const setupRows = setups
+    .map(setup => {
+      const setupTrades = trades.filter(trade =>
+        (trade.selectedSetupIds || []).includes(setup.id)
+      );
 
-  const aPlusTrades = trades.filter(trade => tradeQuality(trade) === "A+").length;
-  const goodLosses = trades.filter(trade => tradeQuality(trade) === "Good Loss").length;
-  const luckyWins = trades.filter(trade => tradeQuality(trade) === "Lucky Win").length;
-  const badLosses = trades.filter(trade => tradeQuality(trade) === "Bad Loss").length;
+      const withResult = setupTrades.filter(trade => trade.result);
+      const wins = withResult.filter(trade => trade.result === "Win").length;
+      const losses = withResult.filter(trade => trade.result === "Loss").length;
+      const be = withResult.filter(trade => trade.result === "BE").length;
 
-  const StatCard = ({ label, val, color }) => (
+      const followedYes = setupTrades.filter(trade => trade.followedPlan === "Yes").length;
+      const disciplineTotal = setupTrades.filter(
+        trade =>
+          trade.followedPlan === "Yes" ||
+          trade.followedPlan === "No" ||
+          trade.followedPlan === "Partially"
+      ).length;
+
+      const followedNoLosses = setupTrades.filter(
+        trade => trade.followedPlan === "No" && trade.result === "Loss"
+      ).length;
+
+      return {
+        id: setup.id,
+        name: setup.name,
+        count: setupTrades.length,
+        wins,
+        losses,
+        be,
+        wr: calcWR(setupTrades),
+        planRate: disciplineTotal
+          ? ((followedYes / disciplineTotal) * 100).toFixed(0)
+          : "—",
+        followedNoLosses,
+      };
+    })
+    .filter(row => row.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const StatCard = ({ label, val, sub, color }) => (
     <div
       style={{
         background: "#f7f7f5",
-        borderRadius: 8,
+        borderRadius: 12,
         padding: "14px 16px",
-        textAlign: "center",
+        border: "0.5px solid #ececea",
       }}
     >
       <div
         style={{
           fontSize: 11,
           color: "#aaa",
-          fontWeight: 600,
+          fontWeight: 700,
           textTransform: "uppercase",
-          marginBottom: 6,
+          marginBottom: 8,
         }}
       >
         {label}
       </div>
 
-      <div style={{ fontSize: 24, fontWeight: 600, color: color || "#111" }}>
+      <div style={{ fontSize: 24, fontWeight: 800, color: color || "#111" }}>
         {val}
       </div>
+
+      {sub && (
+        <div style={{ fontSize: 12, color: "#999", marginTop: 4 }}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 
-  const TableRow = ({ label, count, wins }) => (
+  const Row = ({ left, right, color }) => (
     <div
       style={{
         display: "flex",
         justifyContent: "space-between",
-        padding: "8px 0",
-        borderBottom: "0.5px solid #f0f0f0",
+        gap: 12,
+        padding: "10px 0",
+        borderBottom: "0.5px solid #eee",
         fontSize: 13,
       }}
     >
-      <span style={{ color: "#333" }}>{label}</span>
-
-      <span style={{ color: "#999" }}>
-        {count} {t("tradeUnit")} ·{" "}
-        <span style={{ color: "#3B6D11", fontWeight: 500 }}>
-          {count ? ((wins / count) * 100).toFixed(0) : 0}% WR
-        </span>
-      </span>
+      <span style={{ color: "#333" }}>{left}</span>
+      <span style={{ color: color || "#777", fontWeight: 700 }}>{right}</span>
     </div>
   );
 
-  const bySession = sessions
-    .map(session => ({
-      session,
-      count: trades.filter(trade => trade.session === session).length,
-      wins: trades.filter(
-        trade => trade.session === session && trade.result === "Win"
-      ).length,
-    }))
-    .filter(session => session.count > 0);
-
-  const bySetup = setups
-    .map(setup => ({
-      name: setup.name,
-      count: trades.filter(trade =>
-        (trade.selectedSetupIds || []).includes(setup.id)
-      ).length,
-      wins: trades.filter(
-        trade =>
-          (trade.selectedSetupIds || []).includes(setup.id) &&
-          trade.result === "Win"
-      ).length,
-    }))
-    .filter(setup => setup.count > 0);
+  const tabs = [
+    { value: "discipline", label: t("disciplineReview") },
+    { value: "psychology", label: t("psychology") },
+    { value: "setup", label: t("setupPerformance") },
+    { value: "session", label: t("bySession") },
+  ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
-        <StatCard label={t("totalTrades")} val={trades.length} />
-        <StatCard label={t("winRate")} val={`${wr}%`} color="#3B6D11" />
-        <StatCard label={t("winLossBE")} val={`${wins} / ${losses} / ${be}`} />
-        <StatCard label={t("noResult")} val={trades.length - withResult.length} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        {tabs.map(item => {
+          const active = activeView === item.value;
+
+          return (
+            <button
+              key={item.value}
+              onClick={() => setActiveView(item.value)}
+              style={{
+                ...btnStyle,
+                borderRadius: 999,
+                padding: "7px 14px",
+                background: active ? "#111" : "#fff",
+                color: active ? "#fff" : "#777",
+                borderColor: active ? "#111" : "#ddd",
+                fontWeight: active ? 700 : 400,
+              }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
-        <StatCard
-          label={t("cleanTrades")}
-          val={`${cleanTrades.length} · ${cleanWR}% WR`}
-          color="#3B6D11"
-        />
-        <StatCard
-          label={t("disciplineIssues")}
-          val={`${issueTrades.length} · ${issueWR}% WR`}
-          color="#A32D2D"
-        />
-        <StatCard
-          label={t("luckyWins")}
-          val={luckyWins}
-          color="#854F0B"
-        />
-        <StatCard
-          label={t("badLosses")}
-          val={badLosses}
-          color="#A32D2D"
-        />
-      </div>
+      {activeView === "discipline" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            <StatCard
+              label={t("cleanTrades")}
+              val={cleanTrades.length}
+              sub={`${cleanWR}% WR`}
+              color="#3B6D11"
+            />
+            <StatCard
+              label={t("disciplineIssues")}
+              val={issueTrades.length}
+              sub={`${issueWR}% WR`}
+              color="#A32D2D"
+            />
+            <StatCard
+              label={t("luckyWins")}
+              val={luckyWins}
+              sub={t("tradeQuality")}
+              color="#854F0B"
+            />
+            <StatCard
+              label={t("badLosses")}
+              val={badLosses}
+              sub={t("tradeQuality")}
+              color="#A32D2D"
+            />
+          </div>
 
-      <SetupPerformance trades={trades} setups={setups} t={t} />
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            <div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#888",
-                  marginBottom: 10,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.3,
-                }}
-              >
-                {t("followedPlan")}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div
+              style={{
+                background: "#f7f7f5",
+                borderRadius: 12,
+                padding: "12px 16px",
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#888", marginBottom: 8 }}>
+                {t("followedPlan").toUpperCase()}
               </div>
-
-              <div
-                style={{
-                  background: "#f7f7f5",
-                  borderRadius: 8,
-                  padding: "12px 14px",
-                  fontSize: 13,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{t("followedYes")}</span>
-                  <span style={{ color: "#3B6D11", fontWeight: 600 }}>
-                    {followedYes} · {followedWR}% WR
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{t("followedNo")}</span>
-                  <span style={{ color: "#A32D2D", fontWeight: 600 }}>
-                    {followedNo} · {notFollowedWR}% WR
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{t("followedPartial")}</span>
-                  <span style={{ color: "#854F0B", fontWeight: 600 }}>
-                    {followedPartial}
-                  </span>
-                </div>
-              </div>
+              <Row left={t("followedYes")} right={`${followedYes} · ${followedWR}% WR`} color="#3B6D11" />
+              <Row left={t("followedNo")} right={`${followedNo} · ${notFollowedWR}% WR`} color="#A32D2D" />
+              <Row left={t("followedPartial")} right={followedPartial} color="#854F0B" />
             </div>
 
-            <div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "#888",
-                  marginBottom: 10,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.3,
-                }}
-              >
-                {t("mistakes")}
+            <div
+              style={{
+                background: "#fffaf5",
+                borderRadius: 12,
+                padding: "12px 16px",
+                border: "0.5px solid #f0d8bd",
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 800, color: "#888", marginBottom: 8 }}>
+                {t("mistakes").toUpperCase()}
               </div>
 
               {mistakeStats.length === 0 ? (
                 <div style={{ fontSize: 13, color: "#bbb" }}>{t("noData")}</div>
               ) : (
-                <div
-                  style={{
-                    background: "#f7f7f5",
-                    borderRadius: 8,
-                    padding: "12px 14px",
-                    fontSize: 13,
-                  }}
-                >
-                  {mistakeStats.map(m => (
-                    <div
-                      key={m.value}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "7px 0",
-                        borderBottom: "0.5px solid #e5e5e5",
-                      }}
-                    >
-                      <span>{m.label}</span>
-                      <span style={{ color: "#8A4B12", fontWeight: 600 }}>
-                        {m.count}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                mistakeStats.slice(0, 6).map(item => (
+                  <Row
+                    key={item.value}
+                    left={item.label}
+                    right={item.count}
+                    color="#8A4B12"
+                  />
+                ))
               )}
             </div>
           </div>
-          <div
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#888",
-              marginBottom: 10,
-              textTransform: "uppercase",
-              letterSpacing: 0.3,
-            }}
-          >
-            {t("bySession")}
+        </div>
+      )}
+
+      {activeView === "psychology" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            <StatCard
+              label={t("averageMindScore")}
+              val={averageMindScore}
+              sub={averageMindScore === "—" ? t("noData") : t(getMindStateKey(Number(averageMindScore)))}
+              color={averageMindScore !== "—" && Number(averageMindScore) < 0 ? "#A32D2D" : "#185FA5"}
+            />
+            <StatCard
+              label={`${t("mindScore")} · Win`}
+              val={mindWin}
+              color="#3B6D11"
+            />
+            <StatCard
+              label={`${t("mindScore")} · Loss`}
+              val={mindLoss}
+              color="#A32D2D"
+            />
+            <StatCard
+              label={t("weakestMindStage")}
+              val={weakestMindStage ? weakestMindStage.label : "—"}
+              color="#854F0B"
+            />
           </div>
 
-          {bySession.length === 0 && (
-            <div style={{ fontSize: 13, color: "#bbb" }}>{t("noData")}</div>
-          )}
-
-          {bySession.map(session => (
-            <TableRow
-              key={session.session}
-              label={session.session}
-              count={session.count}
-              wins={session.wins}
-            />
-          ))}
-        </div>
-
-        <div>
           <div
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#888",
-              marginBottom: 10,
-              textTransform: "uppercase",
-              letterSpacing: 0.3,
+              background: "#f7f7f5",
+              borderRadius: 12,
+              padding: "12px 16px",
             }}
           >
-            {t("bySetup")}
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#888", marginBottom: 8 }}>
+              {t("mindByPlan").toUpperCase()}
+            </div>
+
+            <Row left={t("followedYes")} right={mindFollowedYes} color="#3B6D11" />
+            <Row left={t("followedNo")} right={mindFollowedNo} color="#A32D2D" />
           </div>
-
-          {bySetup.length === 0 && (
-            <div style={{ fontSize: 13, color: "#bbb" }}>{t("noData")}</div>
-          )}
-
-          {bySetup.map(setup => (
-            <TableRow
-              key={setup.name}
-              label={setup.name}
-              count={setup.count}
-              wins={setup.wins}
-            />
-          ))}
         </div>
-      </div>
+      )}
+
+      {activeView === "setup" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {setupRows.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#bbb", textAlign: "center", padding: 24 }}>
+              {t("noSetupPerformance")}
+            </div>
+          ) : (
+            setupRows.map(row => (
+              <div
+                key={row.id}
+                style={{
+                  background: "#f7f7f5",
+                  borderRadius: 12,
+                  padding: "14px 16px",
+                  border: "0.5px solid #ececea",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    marginBottom: 10,
+                  }}
+                >
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#111" }}>
+                    {row.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#999" }}>
+                    {row.count} {t("tradeUnit")}
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  <StatCard label={t("winRate")} val={`${row.wr}%`} color="#3B6D11" />
+                  <StatCard label={t("winLossBE")} val={`${row.wins} / ${row.losses} / ${row.be}`} />
+                  <StatCard label={t("planRate")} val={`${row.planRate}%`} color="#185FA5" />
+                  <StatCard label={t("lossWithoutPlan")} val={row.followedNoLosses} color="#A32D2D" />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeView === "session" && (
+        <div
+          style={{
+            background: "#f7f7f5",
+            borderRadius: 12,
+            padding: "12px 16px",
+          }}
+        >
+          {bySession.length === 0 ? (
+            <div style={{ fontSize: 13, color: "#bbb", textAlign: "center", padding: 24 }}>
+              {t("noData")}
+            </div>
+          ) : (
+            bySession.map(item => (
+              <Row
+                key={item.session}
+                left={item.session}
+                right={`${item.count} ${t("tradeUnit")} · ${item.wr}% WR`}
+                color="#185FA5"
+              />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -4388,6 +4743,8 @@ function ThietLapTab({
   onSessionsSave,
   pnlMode,
   onPnlModeSave,
+  psychologyMode,
+  onPsychologyModeSave,
   language,
   onLanguageSave,
   t,
@@ -4496,6 +4853,67 @@ function ThietLapTab({
           >
             {t("byMoney")}
           </button>
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 4 }}>
+          {t("psychologyTracking")}
+        </div>
+
+        <div style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>
+          {t("psychologyTrackingNote")}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          {[
+            {
+              value: "off",
+              title: t("psychologyOff"),
+              note: t("psychologyOffNote"),
+            },
+            {
+              value: "basic",
+              title: t("psychologyBasic"),
+              note: t("psychologyBasicNote"),
+            },
+            {
+              value: "advanced",
+              title: t("psychologyAdvanced"),
+              note: t("psychologyAdvancedNote"),
+            },
+          ].map(option => {
+            const active = psychologyMode === option.value;
+
+            return (
+              <button
+                key={option.value}
+                onClick={() => onPsychologyModeSave(option.value)}
+                style={{
+                  textAlign: "left",
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  border: `1.5px solid ${active ? "#185FA5" : "#e5e5e5"}`,
+                  background: active ? "#EBF4FD" : "#fff",
+                  color: active ? "#185FA5" : "#777",
+                  fontFamily: "inherit",
+                  boxShadow: active
+                    ? "0 0 0 3px rgba(24,95,165,0.08)"
+                    : "0 1px 3px rgba(0,0,0,0.04)",
+                }}
+              >
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 5 }}>
+                  {active ? "✓ " : ""}
+                  {option.title}
+                </div>
+
+                <div style={{ fontSize: 12, color: active ? "#185FA5" : "#999", lineHeight: 1.5 }}>
+                  {option.note}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -4777,6 +5195,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [cloudLoaded, setCloudLoaded] = useState(false);
+  const [cloudLoadTimedOut, setCloudLoadTimedOut] = useState(false);
   const [tab, setTab] = useState("new");
   const [trades, setTrades] = useState(() => load(STORAGE_KEY, []));
   const [setups, setSetups] = useState(() => load(SETUPS_KEY, []));
@@ -4787,6 +5206,11 @@ export default function App() {
   const [language, setLanguage] = useState(() =>
     load(LANGUAGE_KEY, DEFAULT_LANGUAGE)
   );
+
+  const [psychologyMode, setPsychologyMode] = useState(() =>
+    load(PSYCHOLOGY_MODE_KEY, "advanced")
+  );
+
   const [editTrade, setEditTrade] = useState(null);
   const [dayModal, setDayModal] = useState(null);
 
@@ -4800,8 +5224,9 @@ export default function App() {
       sessions,
       pnlMode,
       language,
+      psychologyMode,
     };
-  }, [trades, setups, sessions, pnlMode, language]);
+  }, [trades, setups, sessions, pnlMode, language, psychologyMode]);
 
   useEffect(() => {
     let mounted = true;
@@ -4867,7 +5292,17 @@ export default function App() {
     let cancelled = false;
 
     const loadCloudJournal = async () => {
-      setCloudLoaded(false);
+  setCloudLoaded(false);
+  setCloudLoadTimedOut(false);
+
+      const timeoutId = setTimeout(() => {
+        if (!cancelled) {
+          console.warn("Cloud load timeout. Continue with local data.");
+          setCloudLoadTimedOut(true);
+          loadedUserIdRef.current = user.id;
+          setCloudLoaded(true);
+        }
+      }, 2000);
 
       const localPayload = {
         trades: load(STORAGE_KEY, []),
@@ -4875,6 +5310,7 @@ export default function App() {
         sessions: load(SESSIONS_KEY, DEFAULT_SESSIONS),
         pnlMode: load(PNL_MODE_KEY, "R"),
         language: load(LANGUAGE_KEY, DEFAULT_LANGUAGE),
+        psychologyMode: load(PSYCHOLOGY_MODE_KEY, "advanced"),
       };
 
       const { data, error } = await supabase
@@ -4886,6 +5322,7 @@ export default function App() {
       if (cancelled) return;
 
       if (error) {
+        clearTimeout(timeoutId);
         console.error("Load journal failed:", error);
         alert("Không thể tải dữ liệu journal từ Supabase: " + error.message);
 
@@ -4907,6 +5344,7 @@ export default function App() {
         );
         setPnlMode(cloud.pnlMode || "R");
         setLanguage(cloud.language || DEFAULT_LANGUAGE);
+        setPsychologyMode(cloud.psychologyMode || "advanced");
       } else {
         const { error: upsertError } = await supabase
           .from(JOURNAL_TABLE)
@@ -4924,7 +5362,8 @@ export default function App() {
           alert("Không thể đồng bộ dữ liệu local lên Supabase: " + upsertError.message);
         }
       }
-
+      
+      clearTimeout(timeoutId);
       loadedUserIdRef.current = user.id;
       setCloudLoaded(true);
     };
@@ -4957,7 +5396,11 @@ export default function App() {
   }, [language]);
 
   useEffect(() => {
-    if (!user || !cloudLoaded) return;
+    persist(PSYCHOLOGY_MODE_KEY, psychologyMode);
+  }, [psychologyMode]);
+
+  useEffect(() => {
+    if (!user || !cloudLoaded || cloudLoadTimedOut) return;
 
     const timeout = setTimeout(async () => {
       const payload = buildJournalPayload();
@@ -4979,14 +5422,46 @@ export default function App() {
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [user, cloudLoaded, buildJournalPayload]);
+  }, [user, cloudLoaded, cloudLoadTimedOut, buildJournalPayload]);
 
   const saveTrade = form => {
     if (!validatePnl(form.result, form.pnl, t)) return false;
 
+    const mindBeforeEntryScore = calculateStageScore(
+      form.mindBeforeEntry || [],
+      MIND_TAGS.beforeEntry
+    );
+
+    const mindEntryMomentScore = calculateStageScore(
+      form.mindEntryMoment || [],
+      MIND_TAGS.entryMoment
+    );
+
+    const mindDuringTradeScore = calculateStageScore(
+      form.mindDuringTrade || [],
+      MIND_TAGS.duringTrade
+    );
+
+    const mindAfterExitScore = calculateStageScore(
+      form.mindAfterExit || [],
+      MIND_TAGS.afterExit
+    );
+
+    const mindScore = calculateMindScore([
+      mindBeforeEntryScore,
+      mindEntryMomentScore,
+      mindDuringTradeScore,
+      mindAfterExitScore,
+    ]);
+
     const cleanForm = {
       ...form,
       pnl: normalizePnl(form.result, form.pnl, pnlMode),
+      mindBeforeEntryScore,
+      mindEntryMomentScore,
+      mindDuringTradeScore,
+      mindAfterExitScore,
+      mindScore,
     };
 
     setTrades(ts =>
@@ -5162,6 +5637,7 @@ export default function App() {
               setups={setups}
               sessions={sessions}
               pnlMode={pnlMode}
+              psychologyMode={psychologyMode}
               draftKey={`${TRADE_DRAFT_KEY}_${user.id}`}
               t={t}
             />
@@ -5211,6 +5687,8 @@ export default function App() {
               onSessionsSave={setSessions}
               pnlMode={pnlMode}
               onPnlModeSave={setPnlMode}
+              psychologyMode={psychologyMode}
+              onPsychologyModeSave={setPsychologyMode}
               language={language}
               onLanguageSave={setLanguage}
               t={t}
