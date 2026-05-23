@@ -5109,15 +5109,41 @@ function AuthScreen() {
   const signInWithGoogle = async () => {
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
+    const timeout = setTimeout(() => {
+      console.warn("Google sign-in timeout.");
+      setLoading(false);
+      alert(
+        "Đăng nhập mất quá nhiều thời gian. Vui lòng thử lại, hoặc kiểm tra kết nối Supabase / Google OAuth."
+      );
+    }, 8000);
 
-    if (error) {
-      alert(error.message);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      clearTimeout(timeout);
+
+      if (error) {
+        console.error("Google sign-in failed:", error);
+        alert(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Bình thường Supabase sẽ redirect sang Google.
+      // Nếu vì lý do nào đó không redirect, cho user bấm lại.
+      if (!data?.url) {
+        console.warn("No OAuth redirect URL returned:", data);
+        setLoading(false);
+      }
+    } catch (err) {
+      clearTimeout(timeout);
+      console.error("Google sign-in crashed:", err);
+      alert("Không thể đăng nhập Google. Vui lòng thử lại.");
       setLoading(false);
     }
   };
