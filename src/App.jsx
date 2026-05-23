@@ -5107,25 +5107,18 @@ function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
   const signInWithGoogle = async () => {
-    setLoading(true);
+    if (loading) return;
 
-    const timeout = setTimeout(() => {
-      console.warn("Google sign-in timeout.");
-      setLoading(false);
-      alert(
-        "Đăng nhập mất quá nhiều thời gian. Vui lòng thử lại, hoặc kiểm tra kết nối Supabase / Google OAuth."
-      );
-    }, 8000);
+    setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: window.location.origin,
+          skipBrowserRedirect: true,
         },
       });
-
-      clearTimeout(timeout);
 
       if (error) {
         console.error("Google sign-in failed:", error);
@@ -5134,14 +5127,15 @@ function AuthScreen() {
         return;
       }
 
-      // Bình thường Supabase sẽ redirect sang Google.
-      // Nếu vì lý do nào đó không redirect, cho user bấm lại.
-      if (!data?.url) {
-        console.warn("No OAuth redirect URL returned:", data);
-        setLoading(false);
+      if (data?.url) {
+        window.location.assign(data.url);
+        return;
       }
+
+      console.warn("No OAuth redirect URL returned:", data);
+      alert("Không lấy được link đăng nhập Google. Kiểm tra lại Supabase / Google OAuth.");
+      setLoading(false);
     } catch (err) {
-      clearTimeout(timeout);
       console.error("Google sign-in crashed:", err);
       alert("Không thể đăng nhập Google. Vui lòng thử lại.");
       setLoading(false);
