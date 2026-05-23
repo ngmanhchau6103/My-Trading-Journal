@@ -726,6 +726,31 @@ const normalizePnl = (result, pnl, pnlMode = "R") => {
   return raw.startsWith("+") || raw.startsWith("-") ? `${raw[0]}${unsigned}` : raw;
 };
 
+const parsePnlNumber = pnl => {
+  const raw = String(pnl || "")
+    .trim()
+    .replace(/,/g, "")
+    .replace(/r$/i, "");
+
+  if (!raw) return 0;
+
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const formatNetPnl = (value, pnlMode = "R") => {
+  const rounded = Math.round(value * 100) / 100;
+  const absText = Math.abs(rounded).toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+  });
+
+  const sign = rounded > 0 ? "+" : rounded < 0 ? "-" : "";
+
+  return pnlMode === "R"
+    ? `${sign}${absText}R`
+    : `${sign}${absText}`;
+};
+
 const validatePnl = (result, pnl, t = key => tOf("vi", key)) => {
   const raw = String(pnl || "").trim();
 
@@ -3173,7 +3198,7 @@ function HistoryTab({ trades, setups, sessions, onDelete, onEdit, t }) {
 }
 
 // ─── Calendar View ────────────────────────────────────────────────────────────
-function CalendarView({ trades, onSelectDay, lang, t }) {
+function CalendarView({ trades, onSelectDay, lang, t, pnlMode }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -3374,27 +3399,35 @@ function CalendarView({ trades, onSelectDay, lang, t }) {
           const noRes = dayTrades.filter(trade => !trade.result).length;
           const isToday = dateStr === today.toISOString().slice(0, 10);
 
+          const dayNet = dayTrades.reduce(
+            (sum, trade) => sum + parsePnlNumber(trade.pnl),
+            0
+          );
+
+          const dayNetRounded = Math.round(dayNet * 100) / 100;
+          const dayNetText = formatNetPnl(dayNetRounded, pnlMode);
+
           let cellBg = "#f7f7f5";
           let cellBorder = "#eee";
           let textColor = "#333";
+          let netColor = "#777";
 
           if (dayTrades.length > 0) {
-            if (wins > losses) {
+            if (dayNetRounded > 0) {
               cellBg = "#EAF3DE";
               cellBorder = "#97C459";
               textColor = "#2d5a0e";
-            } else if (losses > wins) {
+              netColor = "#3B6D11";
+            } else if (dayNetRounded < 0) {
               cellBg = "#FCEBEB";
               cellBorder = "#F09595";
               textColor = "#8c1f1f";
-            } else if (be > 0) {
+              netColor = "#A32D2D";
+            } else {
               cellBg = "#FAEEDA";
               cellBorder = "#EF9F27";
               textColor = "#7a4400";
-            } else {
-              cellBg = "#EBF4FD";
-              cellBorder = "#85B7EB";
-              textColor = "#185FA5";
+              netColor = "#854F0B";
             }
           }
 
@@ -3429,26 +3462,33 @@ function CalendarView({ trades, onSelectDay, lang, t }) {
 
               {dayTrades.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {wins > 0 && (
-                    <div style={{ fontSize: 10, color: "#3B6D11", fontWeight: 600 }}>
-                      ✓ {wins}W
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: netColor,
+                      fontWeight: 800,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {dayNetText}
+                  </div>
 
-                  {losses > 0 && (
-                    <div style={{ fontSize: 10, color: "#A32D2D", fontWeight: 600 }}>
-                      ✗ {losses}L
-                    </div>
-                  )}
-
-                  {be > 0 && (
-                    <div style={{ fontSize: 10, color: "#854F0B", fontWeight: 600 }}>
-                      — {be}BE
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: "#777",
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {wins}W / {losses}L
+                    {be > 0 ? ` / ${be}BE` : ""}
+                  </div>
 
                   {noRes > 0 && (
-                    <div style={{ fontSize: 10, color: "#aaa" }}>○ {noRes}</div>
+                    <div style={{ fontSize: 10, color: "#aaa", lineHeight: 1.2 }}>
+                      ○ {noRes}
+                    </div>
                   )}
                 </div>
               )}
@@ -3932,7 +3972,7 @@ function WeeklyReview({ trades, setups, lang, t }) {
 }
 
 // ─── Combined Stats + Calendar Tab ───────────────────────────────────────────
-function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
+function StatsTab({ trades, setups, sessions, onSelectDay, lang, t, pnlMode }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [showAdvancedStats, setShowAdvancedStats] = useState(false);
@@ -3959,6 +3999,7 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
         onSelectDay={onSelectDay}
         lang={lang}
         t={t}
+        pnlMode={pnlMode}
       />
 
       <WeeklyReview trades={trades} setups={setups} lang={lang} t={t} />
@@ -3999,7 +4040,9 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t }) {
             </div>
 
             <div style={{ fontSize: 13, color: "#999", lineHeight: 1.5 }}>
-              Xem phân tích chi tiết theo khoảng thời gian bạn chọn.
+              {lang === "vi"
+                ? "Xem phân tích chi tiết theo khoảng thời gian bạn chọn."
+                : "View detailed analysis based on your selected date range."}
             </div>
           </div>
 
@@ -5714,6 +5757,7 @@ export default function App() {
               }
               lang={language}
               t={t}
+              pnlMode={pnlMode}
             />
           </>
         )}
