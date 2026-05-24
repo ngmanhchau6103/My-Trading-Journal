@@ -271,6 +271,7 @@ const TEXT = {
 
     weeklyMindScore: "Tâm lý tuần này",
     reviewNotes: "Review notes",
+    weeklyNetResult: "Kết quả tuần",
 
     advancedStats: "Thống kê chi tiết",
     showAdvancedStats: "Hiện thống kê chi tiết",
@@ -525,6 +526,7 @@ const TEXT = {
 
     weeklyMindScore: "Weekly Mind Score",
     reviewNotes: "Review notes",
+    weeklyNetResult: "Weekly result",
 
     advancedStats: "Advanced stats",
     showAdvancedStats: "Show advanced stats",
@@ -791,6 +793,29 @@ const getWeekRange = (offset = 0) => {
 
   const start = new Date(today);
   start.setDate(today.getDate() + diffToMonday + offset * 7);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return {
+    start,
+    end,
+    startKey: toDateKey(start),
+    endKey: toDateKey(end),
+  };
+};
+
+const getWeekRangeFromDate = dateStr => {
+  const date = parseDateKey(dateStr);
+  if (!date) return null;
+
+  date.setHours(0, 0, 0, 0);
+
+  const day = date.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const start = new Date(date);
+  start.setDate(date.getDate() + diffToMonday);
 
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
@@ -3575,13 +3600,16 @@ function DayModal({ dateStr, dayTrades, setups, onClose, onEdit, onDelete, lang,
   );
 }
 
-function WeeklyReview({ trades, setups, lang, t }) {
+function WeeklyReview({ trades, setups, lang, t, selectedDate, onClearSelectedDate, pnlMode }) {
   const [weekOffset, setWeekOffset] = useState(0);
 
-  const { startKey, endKey } = useMemo(
-    () => getWeekRange(weekOffset),
-    [weekOffset]
-  );
+  const { startKey, endKey } = useMemo(() => {
+    if (selectedDate) {
+      return getWeekRangeFromDate(selectedDate);
+    }
+
+    return getWeekRange(weekOffset);
+  }, [selectedDate, weekOffset]);
 
   const weekTrades = useMemo(() => {
     return trades.filter(trade => isDateInRange(trade.date, startKey, endKey));
@@ -3592,6 +3620,21 @@ function WeeklyReview({ trades, setups, lang, t }) {
   const losses = withResult.filter(trade => trade.result === "Loss").length;
   const be = withResult.filter(trade => trade.result === "BE").length;
   const wr = calcWR(weekTrades);
+
+  const weeklyNetPnl = weekTrades.reduce(
+    (sum, trade) => sum + parsePnlNumber(trade.pnl),
+    0
+  );
+
+  const weeklyNetRounded = Math.round(weeklyNetPnl * 100) / 100;
+  const weeklyNetText = formatNetPnl(weeklyNetRounded, pnlMode);
+
+  const weeklyNetColor =
+    weeklyNetRounded > 0
+      ? "#3B6D11"
+      : weeklyNetRounded < 0
+        ? "#A32D2D"
+        : "#854F0B";
 
   const followedYes = weekTrades.filter(trade => trade.followedPlan === "Yes").length;
   const followedNo = weekTrades.filter(trade => trade.followedPlan === "No").length;
@@ -3828,15 +3871,21 @@ function WeeklyReview({ trades, setups, lang, t }) {
 
         <div style={{ display: "flex", gap: 8 }}>
           <button
-            onClick={() => setWeekOffset(w => w - 1)}
+            onClick={() => {
+              onClearSelectedDate?.();
+              setWeekOffset(w => w - 1);
+            }}
             style={{ ...btnStyle, fontSize: 12 }}
           >
             ← {t("previousWeek")}
           </button>
 
-          {weekOffset !== 0 && (
+          {(weekOffset !== 0 || selectedDate) && (
             <button
-              onClick={() => setWeekOffset(0)}
+              onClick={() => {
+                onClearSelectedDate?.();
+                setWeekOffset(0);
+              }}
               style={{ ...btnStyle, fontSize: 12 }}
             >
               {t("currentWeek")}
@@ -3844,7 +3893,10 @@ function WeeklyReview({ trades, setups, lang, t }) {
           )}
 
           <button
-            onClick={() => setWeekOffset(w => w + 1)}
+            onClick={() => {
+              onClearSelectedDate?.();
+              setWeekOffset(w => w + 1);
+            }}
             style={{ ...btnStyle, fontSize: 12 }}
           >
             {t("nextWeek")} →
@@ -3870,7 +3922,7 @@ function WeeklyReview({ trades, setups, lang, t }) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateColumns: "repeat(5, 1fr)",
               gap: 10,
               marginBottom: 16,
             }}
@@ -3879,6 +3931,13 @@ function WeeklyReview({ trades, setups, lang, t }) {
               label={t("totalTrades")}
               value={weekTrades.length}
               sub={`${wins}W / ${losses}L / ${be}BE`}
+            />
+
+            <MiniCard
+              label={t("weeklyNetResult")}
+              value={weeklyNetText}
+              sub={pnlMode === "R" ? "Net R" : "Net P/L"}
+              color={weeklyNetColor}
             />
 
             <MiniCard
@@ -3976,6 +4035,7 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t, pnlMode }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [showAdvancedStats, setShowAdvancedStats] = useState(false);
+  const [selectedReviewDate, setSelectedReviewDate] = useState(null);
 
   const filteredTrades = useMemo(() => {
     return trades.filter(trade => {
@@ -3996,13 +4056,24 @@ function StatsTab({ trades, setups, sessions, onSelectDay, lang, t, pnlMode }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       <CalendarView
         trades={trades}
-        onSelectDay={onSelectDay}
+        onSelectDay={(dateStr, dayTrades) => {
+          setSelectedReviewDate(dateStr);
+          onSelectDay(dateStr, dayTrades);
+        }}
         lang={lang}
         t={t}
         pnlMode={pnlMode}
       />
 
-      <WeeklyReview trades={trades} setups={setups} lang={lang} t={t} />
+      <WeeklyReview
+        trades={trades}
+        setups={setups}
+        lang={lang}
+        t={t}
+        selectedDate={selectedReviewDate}
+        onClearSelectedDate={() => setSelectedReviewDate(null)}
+        pnlMode={pnlMode}
+      />
 
       <div
         style={{
